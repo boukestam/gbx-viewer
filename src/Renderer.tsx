@@ -176,16 +176,18 @@ function createRoad(name: string) {
 
   if (name.includes("Curve")) {
     const amount = parseInt(name[name.length - 1]);
-    const offset = new THREE.Vector3(amount * 16, 0, amount * 16);
+    const pivotOffset = new THREE.Vector3(amount * 32 - 16, 0, 0);
+    const offset = new THREE.Vector3(amount * 16 - 16, 0, amount * 16);
     const axis = new THREE.Vector3(0, 1, 0);
     numSteps = 10;
 
     f = (point: Vec3, step: number) => {
       const rotated = point
         .toTHREE()
-        .sub(offset)
-        .applyAxisAngle(axis, step * (Math.PI / 2 / numSteps));
-      //.add(offset);
+        .sub(pivotOffset)
+        .applyAxisAngle(axis, step * (Math.PI / 2 / numSteps))
+        .add(pivotOffset)
+        .sub(offset);
       return new Vec3(rotated.x, rotated.y, rotated.z);
     };
   }
@@ -213,14 +215,16 @@ export function Renderer({
 
     const fov = 75;
     const aspect = 2; // the canvas default
-    const near = 0.1;
+    const near = 1;
     const far = 10000;
     const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
-    camera.position.z = 1500;
-    camera.position.x = 600;
-    camera.position.y = 600;
+    camera.position.x = 1000;
+    camera.position.y = 200;
+    camera.position.z = 800;
+    camera.lookAt(new THREE.Vector3(camera.position.x, 0, camera.position.z));
 
-    // const controls = new OrbitControls(camera, renderer.domElement);
+    let controlType: "free" | "follow" = "free";
+    const controls = new OrbitControls(camera, renderer.domElement);
 
     const scene = new THREE.Scene();
 
@@ -296,22 +300,26 @@ export function Renderer({
         camera.updateProjectionMatrix();
       }
 
-      const nextSample =
-        ghost.samples[Math.min(sampleIndex + 1, ghost.samples.length - 1)];
+      if (controlType === "follow") {
+        const nextSample =
+          ghost.samples[Math.min(sampleIndex + 1, ghost.samples.length - 1)];
 
-      const sampleVelocity = nextSample
-        .transform!.position.sub(sampleTransform.position)
-        .toTHREE()
-        .normalize();
-      const cameraPosition = carMesh.position
-        .clone()
-        .sub(sampleVelocity.multiplyScalar(20));
-      camera.position.set(
-        cameraPosition.x,
-        cameraPosition.y + 8,
-        cameraPosition.z
-      );
-      camera.lookAt(carMesh.position);
+        const sampleVelocity = nextSample
+          .transform!.position.sub(sampleTransform.position)
+          .toTHREE()
+          .normalize();
+        const cameraPosition = carMesh.position
+          .clone()
+          .sub(sampleVelocity.multiplyScalar(20));
+        camera.position.set(
+          cameraPosition.x,
+          cameraPosition.y + 8,
+          cameraPosition.z
+        );
+        camera.lookAt(carMesh.position);
+      } else if (controlType === "free") {
+        controls.update();
+      }
 
       renderer.render(scene, camera);
 
