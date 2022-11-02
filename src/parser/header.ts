@@ -1,7 +1,6 @@
 import MapParser from "./parser";
 
 export function parseHeader(p: MapParser) {
-  console.log(p);
   p.skip(3); // skip GBX
 
   const version = p.uint16();
@@ -61,7 +60,6 @@ function parseHeaderChunk(p: MapParser, id: string, size: number) {
       return _parseC6(p, size);
 
     default: // Skip by default (when not found).
-      console.log("Skipping header chunk", id);
       p.skip(size);
   }
 }

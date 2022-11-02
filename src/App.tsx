@@ -1,40 +1,81 @@
 import React, { useEffect, useState } from "react";
 import "./App.css";
-import { Environment } from "./parser/nodes";
+import { Environment, Ghost, Sample } from "./parser/nodes";
 import MapParser from "./parser/parser";
+import { Chunk } from "./parser/types";
 import { Renderer } from "./Renderer";
+
+export interface GhostSamples extends Ghost {
+  samples: Sample[];
+}
+
+async function loadGbx(url: string) {
+  const response = await fetch(url);
+
+  if (response.status !== 200) {
+    throw new Error("Unable to load gbx file");
+  }
+
+  const buffer = await response.arrayBuffer();
+
+  const parser = new MapParser(Buffer.from(buffer));
+  const result = await parser.parse();
+
+  return result;
+}
+
+function getChunk<T>(chunks: Chunk[], id: number) {
+  return chunks.find((chunk) => chunk.id === id) as T | undefined;
+}
+
+async function loadMap(url: string): Promise<Environment> {
+  const result = await loadGbx(url);
+
+  const environment = getChunk<Environment>(result.body, 0x0304301f);
+
+  if (!environment) throw new Error("No environment found in map file");
+
+  return environment;
+}
+
+async function loadGhost(url: string): Promise<GhostSamples> {
+  const result = await loadGbx(url);
+
+  const ghost =
+    getChunk<Ghost>(result.body, 0x03092000) ||
+    getChunk<Ghost>(
+      getChunk<any>(result.body, 0x03093014).ghosts[0].chunks,
+      0x03092000
+    );
+
+  if (!ghost) throw new Error("No ghost found in map file");
+
+  const samples: Sample[] = [];
+  for (const chunk of ghost.recordData.chunks) {
+    const sampleChunk = chunk as { samples?: Sample[] };
+    if (sampleChunk.samples) {
+      for (const sample of sampleChunk.samples) {
+        if (sample.transform) samples.push(sample);
+      }
+    }
+  }
+
+  return { ...ghost, samples: samples };
+}
 
 function App() {
   const [map, setMap] = useState<Environment | null>(null);
+  const [ghost, setGhost] = useState<GhostSamples | null>(null);
 
   useEffect(() => {
-    fetch(
-      //"/data/Maps/Campaigns/CurrentQuarterly/Fall 2022 - 01.Map.Gbx"
-      //"/data/Blocks/Stadium/GamepadEditor/DirtRoadFlat/Checkpoints/Start/Ground.Macroblock.Gbx"
-      "/data/ghost.gbx"
-    ).then((response) => {
-      if (response.status !== 200) {
-        console.error("Unable to load gbx file");
-        return;
-      }
-
-      response.arrayBuffer().then((buffer) => {
-        const parser = new MapParser(Buffer.from(buffer));
-        parser.parse().then((result) => {
-          console.log(result);
-          const environment: Environment = result.body.find(
-            (chunk) => chunk.id == 0x0304301f
-          ) as unknown as Environment;
-          setMap(environment);
-        });
-      });
-    });
+    loadMap("/data/TMS_Dirt_4.Map.Gbx").then(setMap);
+    loadGhost("/data/TMS_Dirt_4.Replay.gbx").then(setGhost);
   }, []);
 
   return (
     <div className="App">
-      {!map && "Loading..."}
-      {map && <Renderer map={map} />}
+      {(!map || !ghost) && "Loading..."}
+      {map && ghost && <Renderer map={map} ghost={ghost} />}
     </div>
   );
 }

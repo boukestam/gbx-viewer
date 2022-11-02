@@ -1,4 +1,4 @@
-import { Vec3 } from "./parser";
+import { Color, FileRef, Transform, Vec3, Node } from "./types";
 
 export interface Block {
   blockName: string;
@@ -31,11 +31,27 @@ export interface Archive {
   numPieces: number;
 }
 
-export interface Chunk {
-  id: number;
-}
+export interface Sample {
+  timestamp: number;
+  transform?: Transform;
+  rpm?: number;
+  steer?: number;
+  gas?: number;
+  brake?: number;
+  gear?: number;
+};
 
-export interface Node {
-  id: number;
-  chunks: Chunk[];
+export interface Ghost {
+  ghostAvatarName: string;
+  ghostClubTag: string;
+  ghostNickname: string;
+  ghostTrigram: string;
+  ghostZone: string;
+  hasBadges: boolean;
+  lightTrailColor: Color;
+  playerModel: [string, string, string];
+  recordData: Node;
+  recordingContext: string;
+  skinPackDescs: FileRef[];
+  version: number;
 }

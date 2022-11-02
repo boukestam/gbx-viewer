@@ -23,7 +23,7 @@ export function parseBlocks(p: MapParser, chunkId: number): Environment {
   for (let i = 0; i < numBlocks; i++) {
     const blockName = p.lookBackString();
 
-    const rotation = p.byte();
+    const rotation = p.byte(); // north, east, south, west
     const x = p.byte();
     const y = p.byte();
     const z = p.byte();

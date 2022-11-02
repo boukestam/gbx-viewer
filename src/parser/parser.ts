@@ -2,12 +2,12 @@ import BufferReader from "buffer-reader";
 import { EventEmitter } from "events";
 
 import { CollectionIds } from "./collection_ids";
-import { Chunk, Node } from "./nodes";
 import { parseRefTable, ReferenceTable } from "./table";
 import { parseChunk } from "./chunk";
 import { parseHeader } from "./header";
 
 import pako from "pako";
+import { FileRef, Vec3, Vec4, Transform, Vec2, Color, Quaternion, Chunk, Node } from "./types";
 
 const lzo1x = require("./lzo1x.js");
 
@@ -26,61 +26,27 @@ const skippableChunks = [
 
   0x0305b00a, 0x0305b00e,
 
-  0x03092013, 0x0309201a, 0x0309201b,
+  0x03092013, 0x0309201a, 0x0309201b, 0x03092022, 0x03092023, 0x03092024, 
+  0x03092026, 0x03092027, 0x03092028, 0x03092029, 0x0309202A, 0x0309202B,
+  0x0309202C, 0x0309202D,
+
+  0x0309301A, 0x0309301B, 0x0309301C, 0x0309301D, 0x0309301E, 0x0309301F, 
+  0x03093020, 0x03093021, 0x03093022, 0x03093023, 0x03093025, 0x03093026,
+  0x03093027, 0x03093028,
 
   0x0310d00b, 0x0310d00c, 0x0310d010, 0x0310d011,
 
   0x2e009001,
+
+  0x40000006,
 ];
 
 const parsableSkippableChunks = [
   0x03092000, 0x03092005, 0x03092008, 0x03092009, 0x0309200a, 0x0309200b,
-  0x03092013, 0x03092014, 0x03092017, 0x0309201d,
+  0x03092013, 0x03092014, 0x03092017, 0x0309201d, 0x03092025,
+
+  0x03093018
 ];
-
-export interface Vec2 {
-  x: number;
-  y: number;
-}
-
-export class Vec3 {
-  x: number;
-  y: number;
-  z: number;
-
-  constructor(x: number, y: number, z: number) {
-    this.x = x;
-    this.y = y;
-    this.z = z;
-  }
-
-  add(other: Vec3) {
-    return new Vec3(this.x + other.x, this.y + other.y, this.z + other.z);
-  }
-
-  sub(other: Vec3) {
-    return new Vec3(this.x - other.x, this.y - other.y, this.z - other.z);
-  }
-
-  mul(value: number) {
-    return new Vec3(this.x * value, this.y * value, this.z * value);
-  }
-
-  div(value: number) {
-    return new Vec3(this.x / value, this.y / value, this.z / value);
-  }
-
-  static zero() {
-    return new Vec3(0, 0, 0);
-  }
-}
-
-export interface Vec4 {
-  x: number;
-  y: number;
-  z: number;
-  w: number;
-}
 
 export default class MapParser extends EventEmitter {
   buffer?: Buffer;
@@ -159,8 +125,6 @@ export default class MapParser extends EventEmitter {
 
         const chunkDataSize = this.uint32();
         this.skip(chunkDataSize);
-
-        console.log("Skipping chunk: " + chunkId.toString(16));
       } else {
         if (chunkFlags.parsableSkippable) {
           this.skip(8); // skip and chunk size
@@ -226,7 +190,7 @@ export default class MapParser extends EventEmitter {
     return uncompressedData;
   }
 
-  fileRef() {
+  fileRef(): FileRef {
     const version = this.byte();
 
     let checksum, locatorUrl;
@@ -294,11 +258,39 @@ export default class MapParser extends EventEmitter {
     return new Vec3(x, y, z);
   }
 
-  color() {
+  color(): Color {
     const r = this.float();
     const g = this.float();
     const b = this.float();
     return { r, g, b };
+  }
+
+  transform(): Transform {
+    const position = this.vec3();
+
+    const angle = this.uint16() / 65535 * Math.PI;
+    const axisHeading = this.int16() / 32767 * Math.PI;
+    const axisPitch = this.int16() / 32767 * Math.PI / 2;
+
+    const speed = Math.exp(this.int16() / 1000);
+    const velocityHeading = this.sybte() / 127 * Math.PI;
+    const velocityPitch = this.sybte() / 127 * Math.PI / 2;
+
+    const axis = new Vec3(
+      Math.sin(angle) * Math.cos(axisPitch) * Math.cos(axisHeading),
+      Math.sin(angle) * Math.cos(axisPitch) * Math.sin(axisHeading),
+      Math.sin(angle) * Math.sin(axisPitch)
+    );
+
+    const rotation = new Quaternion(axis.x, axis.y, axis.z, Math.cos(angle));
+
+    const velocity = new Vec3(
+      speed * Math.cos(velocityPitch) * Math.cos(velocityHeading),
+      speed * Math.cos(velocityPitch) * Math.sin(velocityHeading),
+      speed * Math.sin(velocityPitch)
+    );
+
+    return {position, rotation, speed, velocity};
   }
 
   bool() {
@@ -309,6 +301,10 @@ export default class MapParser extends EventEmitter {
 
   byte() {
     return this.parser.nextUInt8();
+  }
+
+  sybte() {
+    return this.byte() - 128;
   }
 
   bytes(length: number) {
@@ -346,6 +342,10 @@ export default class MapParser extends EventEmitter {
     this.parser.move(count);
   }
 
+  goto(index: number) {
+    this.parser.seek(index);
+  }
+
   skipUntilFacade() {
     while (true) {
       const n = this.uint32();
@@ -354,7 +354,6 @@ export default class MapParser extends EventEmitter {
   }
 
   string() {
-    // [len] [string...(until len reached)]
     let len = this.int32();
     return this.parser.nextString(len);
   }
@@ -395,9 +394,8 @@ export default class MapParser extends EventEmitter {
     inp &= 0x3fffffff;
 
     if (inp - 1 >= this.lookbackStore.length) {
-      console.log(inp);
       throw new Error(
-        "String not found in lookback list!. Offset: " + this.parser.tell()
+        "String not found in lookback list!. Offset: " + this.parser.tell() + " Index: " + inp
       );
     }
 

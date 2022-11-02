@@ -5,6 +5,7 @@
   "license": "MIT",
   "dependencies": {
     "@types/buffer-reader": "^0.1.0",
+    "@types/earcut": "^2.1.1",
     "@types/node": "^18.11.2",
     "@types/pako": "^2.0.0",
     "@types/react": "^18.0.0",
@@ -13,6 +14,7 @@
     "assert": "^2.0.0",
     "buffer": "^6.0.3",
     "buffer-reader": "^0.1.0",
+    "earcut": "^2.2.4",
     "pako": "^2.0.4",
     "react": "^18.2.0",
     "react-app-rewired": "^2.2.1",
