@@ -91,7 +91,6 @@ function createMesh(out: Output) {
     geometry,
     new THREE.MeshPhongMaterial({
       vertexColors: true,
-      side: THREE.DoubleSide,
     })
   );
 

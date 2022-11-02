@@ -44,21 +44,30 @@ export function Renderer({
 
     const scene = new THREE.Scene();
 
-    const sun = new THREE.DirectionalLight(0xffffff, 0.5);
-    sun.position.set(-1000, 2000, 4000);
+    const sun = new THREE.DirectionalLight(0xffffff, 1);
     sun.castShadow = true;
     scene.add(sun);
 
-    sun.shadow.mapSize.width = 512; // default
-    sun.shadow.mapSize.height = 512; // default
-    sun.shadow.camera.near = 0.5; // default
-    sun.shadow.camera.far = 500; // default
+    sun.shadow.mapSize.width = 2048;
+    sun.shadow.mapSize.height = 2048;
+    sun.shadow.camera.near = 10;
+    sun.shadow.camera.far = 1000;
+    sun.shadow.camera.left = -500;
+    sun.shadow.camera.right = 500;
+    sun.shadow.camera.top = -500;
+    sun.shadow.camera.bottom = 500;
 
-    const helper = new THREE.CameraHelper(sun.shadow.camera);
-    scene.add(helper);
-
-    const sky = new THREE.AmbientLight(0xffffff, 0.8);
+    const sky = new THREE.AmbientLight(0xffffff, 0.5);
     scene.add(sky);
+
+    const planeGeometry = new THREE.PlaneGeometry(1, 1);
+    const planeMaterial = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
+    const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+    plane.rotateX(-Math.PI / 2);
+    plane.scale.x = 100000;
+    plane.scale.y = 100000;
+    plane.receiveShadow = true;
+    scene.add(plane);
 
     for (const block of map.blocks) {
       if (!block.blockName.includes("Road")) continue;
@@ -124,8 +133,11 @@ export function Renderer({
     let startTime = -1;
 
     function render(time: number) {
+      let originalTime = time;
+
       if (startTime === -1) {
         startTime = time;
+        time = 0;
       } else {
         time -= startTime;
       }
@@ -134,7 +146,7 @@ export function Renderer({
         (sample) => sample.timestamp > time
       );
       if (sampleIndex === -1) {
-        startTime = time;
+        startTime = originalTime;
         return requestAnimationFrame(render);
       }
       const sample = ghost.samples[sampleIndex];
@@ -145,6 +157,9 @@ export function Renderer({
         car.position.set(samplePosition.x, samplePosition.y, samplePosition.z);
 
         car.rotation.setFromQuaternion(sampleTransform.rotation.toTHREE());
+
+        sun.position.set(car.position.x, car.position.y + 500, car.position.z);
+        sun.target = car;
       }
 
       if (resizeRendererToDisplaySize()) {
