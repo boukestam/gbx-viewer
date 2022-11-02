@@ -5,6 +5,9 @@ import MapParser from "./parser/parser";
 import { Chunk } from "./parser/types";
 import { Renderer } from "./Renderer";
 
+const mapUrl = "/data/Simple TECH 1.Map.Gbx";
+const replayUrl = "/data/Simple TECH 1.Replay.Gbx";
+
 export interface GhostSamples extends Ghost {
   samples: Sample[];
 }
@@ -13,6 +16,7 @@ async function loadGbx(url: string) {
   const response = await fetch(url);
 
   if (response.status !== 200) {
+    console.error(response);
     throw new Error("Unable to load gbx file");
   }
 
@@ -68,8 +72,8 @@ function App() {
   const [ghost, setGhost] = useState<GhostSamples | null>(null);
 
   useEffect(() => {
-    loadMap("/data/TMS_Dirt_4.Map.Gbx").then(setMap);
-    loadGhost("/data/TMS_Dirt_4.Replay.gbx").then(setGhost);
+    loadMap(mapUrl).then(setMap);
+    loadGhost(replayUrl).then(setGhost);
   }, []);
 
   return (

@@ -87,13 +87,18 @@ function createMesh(out: Output) {
   );
   geometry.computeVertexNormals();
 
-  return new THREE.Mesh(
+  const mesh = new THREE.Mesh(
     geometry,
     new THREE.MeshPhongMaterial({
       vertexColors: true,
       side: THREE.DoubleSide,
     })
   );
+
+  mesh.receiveShadow = true;
+  mesh.castShadow = true;
+
+  return mesh;
 }
 
 export function createCube(size: Vec3, color: Color) {
@@ -122,20 +127,35 @@ export function createCube(size: Vec3, color: Color) {
   return createMesh(out);
 }
 
+export function getTrackColor(name: string): Color {
+  if (name.includes("Dirt")) return { r: 255 / 255, g: 87 / 255, b: 33 / 255 };
+  if (name.includes("Water"))
+    return { r: 25 / 255, g: 118 / 255, b: 210 / 255 };
+  if (name.includes("Tech"))
+    return { r: 176 / 255, g: 190 / 255, b: 197 / 255 };
+  if (name.includes("Bump")) return { r: 84 / 255, g: 110 / 255, b: 122 / 255 };
+  throw new Error("Unknown track type: " + name);
+}
+
 export function createRoad(name: string) {
   const left = -16;
   const right = 16;
-  const borderHeight = 1.6;
+  const borderHeight = 2;
   const borderWidth = 1.8;
-  const trackHeight = 0.8;
+  const trackHeight = 0.2;
+  const trackLineHeight = 1.4;
+  const trackLineWidth = 3;
 
   const points = [
     new Vec3(left, 0, 0),
     new Vec3(left, borderHeight, 0),
     new Vec3(left + borderWidth, borderHeight, 0),
-    new Vec3(left + borderWidth, trackHeight, 0),
+    new Vec3(left + borderWidth, trackLineHeight, 0),
 
-    new Vec3(right - borderWidth, trackHeight, 0),
+    new Vec3(left + borderWidth + trackLineWidth, trackHeight, 0),
+    new Vec3(right - borderWidth - trackLineWidth, trackHeight, 0),
+
+    new Vec3(right - borderWidth, trackLineHeight, 0),
     new Vec3(right - borderWidth, borderHeight, 0),
     new Vec3(right, borderHeight, 0),
     new Vec3(right, 0, 0),
@@ -143,7 +163,8 @@ export function createRoad(name: string) {
 
   const borderColor = { r: 1, g: 1, b: 1 };
   const borderSideColor = { r: 0, g: 0, b: 0 };
-  const trackColor = { r: 226 / 255, g: 98 / 255, b: 52 / 255 };
+  const trackColor = getTrackColor(name);
+  const trackLine = { r: 1, g: 1, b: 1 };
   const edgeColor = { r: 0.2, g: 0.2, b: 0.2 };
 
   const colors = [
@@ -151,7 +172,9 @@ export function createRoad(name: string) {
     borderColor,
     borderColor,
     borderSideColor,
+    trackLine,
     trackColor,
+    trackLine,
     borderSideColor,
     borderColor,
     borderColor,

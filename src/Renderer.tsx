@@ -3,9 +3,11 @@ import { Environment } from "./parser/nodes";
 
 import * as THREE from "three";
 import { OrbitControls } from "./orbit";
-import { Vec3, Transform } from "./parser/types";
+import { Transform } from "./parser/types";
 import { GhostSamples } from "./App";
-import { createRoad, createCube } from "./MeshGenerator";
+import { createRoad } from "./MeshGenerator";
+
+const { GLTFLoader } = require("three/addons/loaders/GLTFLoader.js");
 
 export function Renderer({
   map,
@@ -21,7 +23,11 @@ export function Renderer({
 
     const canvas = canvasRef.current;
 
-    const renderer = new THREE.WebGLRenderer({ canvas });
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+    renderer.outputEncoding = THREE.sRGBEncoding;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.setClearColor(0x00b4e2);
 
     const fov = 75;
     const aspect = 2; // the canvas default
@@ -38,11 +44,20 @@ export function Renderer({
 
     const scene = new THREE.Scene();
 
-    const sun = new THREE.DirectionalLight(0xffffff, 1);
-    sun.position.set(-1, 2, 4);
+    const sun = new THREE.DirectionalLight(0xffffff, 0.5);
+    sun.position.set(-1000, 2000, 4000);
+    sun.castShadow = true;
     scene.add(sun);
 
-    const sky = new THREE.HemisphereLight(0xffffbb, 0x080820, 1);
+    sun.shadow.mapSize.width = 512; // default
+    sun.shadow.mapSize.height = 512; // default
+    sun.shadow.camera.near = 0.5; // default
+    sun.shadow.camera.far = 500; // default
+
+    const helper = new THREE.CameraHelper(sun.shadow.camera);
+    scene.add(helper);
+
+    const sky = new THREE.AmbientLight(0xffffff, 0.8);
     scene.add(sky);
 
     for (const block of map.blocks) {
@@ -77,8 +92,34 @@ export function Renderer({
     console.log(roadBlocks);
     console.log(roadBlocks.map((block) => block.blockName));
 
-    const carMesh = createCube(new Vec3(2.1, 1, 3.7), { r: 0, g: 0, b: 1 });
-    scene.add(carMesh);
+    const loader = new GLTFLoader();
+
+    let car: THREE.Object3D;
+
+    loader.load(
+      "models/car.glb",
+
+      // onLoad callback
+      function (obj: any) {
+        console.log(obj);
+        car = obj.scene;
+        car.traverse((node: any) => {
+          node.castShadow = true;
+        });
+        scene.add(car);
+      },
+
+      // onProgress callback
+      function (xhr: any) {
+        console.log((xhr.loaded / xhr.total) * 100 + "% loaded");
+      },
+
+      // onError callback
+      function (err: any) {
+        console.error("An error happened");
+        console.error(err);
+      }
+    );
 
     let startTime = -1;
 
@@ -92,18 +133,19 @@ export function Renderer({
       let sampleIndex = ghost.samples.findIndex(
         (sample) => sample.timestamp > time
       );
-      if (sampleIndex === -1) sampleIndex = ghost.samples.length - 2;
+      if (sampleIndex === -1) {
+        startTime = time;
+        return requestAnimationFrame(render);
+      }
       const sample = ghost.samples[sampleIndex];
       const sampleTransform = sample.transform as Transform;
 
-      const samplePosition = sampleTransform.position;
-      carMesh.position.set(
-        samplePosition.x,
-        samplePosition.y,
-        samplePosition.z
-      );
+      if (car) {
+        const samplePosition = sampleTransform.position;
+        car.position.set(samplePosition.x, samplePosition.y, samplePosition.z);
 
-      carMesh.rotation.setFromQuaternion(sampleTransform.rotation.toTHREE());
+        car.rotation.setFromQuaternion(sampleTransform.rotation.toTHREE());
+      }
 
       if (resizeRendererToDisplaySize()) {
         const canvas = renderer.domElement;
@@ -111,7 +153,7 @@ export function Renderer({
         camera.updateProjectionMatrix();
       }
 
-      if (controlType === "follow") {
+      if (controlType === "follow" && car) {
         const nextSample =
           ghost.samples[Math.min(sampleIndex + 1, ghost.samples.length - 1)];
 
@@ -119,7 +161,7 @@ export function Renderer({
           .transform!.position.sub(sampleTransform.position)
           .toTHREE()
           .normalize();
-        const cameraPosition = carMesh.position
+        const cameraPosition = car.position
           .clone()
           .sub(sampleVelocity.multiplyScalar(20));
         camera.position.set(
@@ -127,7 +169,7 @@ export function Renderer({
           cameraPosition.y + 8,
           cameraPosition.z
         );
-        camera.lookAt(carMesh.position);
+        camera.lookAt(car.position);
       } else if (controlType === "free") {
         controls.update();
       }
