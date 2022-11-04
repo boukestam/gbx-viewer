@@ -2,10 +2,9 @@ import React, { createRef, useEffect } from "react";
 import { Environment } from "./parser/nodes";
 
 import * as THREE from "three";
-import { OrbitControls } from "./orbit";
-import { Transform } from "./parser/types";
+import { Transform, Vec3 } from "./parser/types";
 import { GhostSamples } from "./App";
-import { createRoad } from "./MeshGenerator";
+import { createRoad, hexToSrgb } from "./MeshGenerator";
 
 const { GLTFLoader } = require("three/addons/loaders/GLTFLoader.js");
 
@@ -32,19 +31,14 @@ export function Renderer({
     const fov = 75;
     const aspect = 2; // the canvas default
     const near = 1;
-    const far = 10000;
+    const far = 1000;
     const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
-    camera.position.x = 1000;
-    camera.position.y = 200;
-    camera.position.z = 800;
-    camera.lookAt(new THREE.Vector3(camera.position.x, 0, camera.position.z));
 
     let controlType: "free" | "follow" = "follow";
-    const controls = new OrbitControls(camera, renderer.domElement);
 
     const scene = new THREE.Scene();
 
-    const sun = new THREE.DirectionalLight(0xffffff, 1);
+    const sun = new THREE.DirectionalLight(0xffffff, 0.8);
     sun.castShadow = true;
     scene.add(sun);
 
@@ -61,28 +55,44 @@ export function Renderer({
     scene.add(sky);
 
     const planeGeometry = new THREE.PlaneGeometry(1, 1);
-    const planeMaterial = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
+    const planeMaterial = new THREE.MeshStandardMaterial({
+      color: hexToSrgb("#6A8642").toTHREE(),
+    });
     const plane = new THREE.Mesh(planeGeometry, planeMaterial);
     plane.rotateX(-Math.PI / 2);
     plane.scale.x = 100000;
     plane.scale.y = 100000;
+    plane.translateZ(8);
     plane.receiveShadow = true;
     scene.add(plane);
 
-    for (const block of map.blocks) {
-      if (!block.blockName.includes("Road")) continue;
+    const trackCenter = Vec3.zero();
 
+    const roadBlocks = map.blocks.filter((block) =>
+      block.blockName.includes("Road")
+    );
+
+    for (const block of roadBlocks) {
       const blockMesh = createRoad(block.blockName);
 
-      blockMesh.mesh.position.set(
-        block.x * 32 - blockMesh.offset.x,
-        block.y * 8 - 64,
-        block.z * 32 - blockMesh.offset.z
-      );
-      blockMesh.mesh.rotateY(-block.rotation * (Math.PI / 2) + Math.PI);
+      const mesh = blockMesh.mesh.clone();
 
-      scene.add(blockMesh.mesh);
+      const pos = new Vec3(block.x * 32, block.y * 8 - 64, block.z * 32).sub(
+        blockMesh.offset
+      );
+
+      mesh.rotateY(-block.rotation * (Math.PI / 2) + Math.PI);
+      mesh.position.set(pos.x, pos.y, pos.z);
+
+      trackCenter.add(pos.div(roadBlocks.length));
+
+      scene.add(mesh);
     }
+
+    camera.position.x = 1000;
+    camera.position.y = 100;
+    camera.position.z = 900;
+    camera.lookAt(trackCenter.toTHREE());
 
     function resizeRendererToDisplaySize() {
       const width = window.innerWidth;
@@ -93,10 +103,6 @@ export function Renderer({
       }
       return needResize;
     }
-
-    const roadBlocks = map.blocks.filter((block) =>
-      block.blockName.includes("Road")
-    );
 
     console.log(roadBlocks);
     console.log(roadBlocks.map((block) => block.blockName));
@@ -118,11 +124,6 @@ export function Renderer({
         scene.add(car);
       },
 
-      // onProgress callback
-      function (xhr: any) {
-        console.log((xhr.loaded / xhr.total) * 100 + "% loaded");
-      },
-
       // onError callback
       function (err: any) {
         console.error("An error happened");
@@ -130,7 +131,38 @@ export function Renderer({
       }
     );
 
+    const keydownListener = (e: KeyboardEvent) => {
+      console.log(e.key);
+      keys[e.key] = true;
+    };
+    const keyupListener = (e: KeyboardEvent) => {
+      keys[e.key] = false;
+    };
+
+    const mousedownListener = (e: MouseEvent) => {
+      keys["Mouse" + e.button] = true;
+    };
+    const mouseupListener = (e: MouseEvent) => {
+      keys["Mouse" + e.button] = false;
+    };
+    const mousemoveListener = (e: MouseEvent) => {
+      if (keys["Mouse0"]) {
+        camera.quaternion.y -= e.movementX * 0.002;
+        camera.quaternion.x -= e.movementY * 0.002;
+        camera.quaternion.normalize();
+        camera.up.set(0, 1, 0);
+      }
+    };
+
+    const keys: { [key: string]: boolean } = {};
+    document.addEventListener("keydown", keydownListener);
+    document.addEventListener("keyup", keyupListener);
+    document.addEventListener("mouseup", mouseupListener);
+    document.addEventListener("mousedown", mousedownListener);
+    document.addEventListener("mousemove", mousemoveListener);
+
     let startTime = -1;
+    let animationFrame = 0;
 
     function render(time: number) {
       let originalTime = time;
@@ -186,16 +218,48 @@ export function Renderer({
         );
         camera.lookAt(car.position);
       } else if (controlType === "free") {
-        controls.update();
+        const direction = new THREE.Vector3();
+        camera.getWorldDirection(direction);
+
+        const right = direction
+          .clone()
+          .cross(new THREE.Vector3(0, 1, 0))
+          .normalize();
+
+        if (keys["ArrowUp"] || keys["w"]) {
+          camera.position.addScaledVector(direction, 10);
+        }
+
+        if (keys["ArrowDown"] || keys["s"]) {
+          camera.position.addScaledVector(direction, -10);
+        }
+
+        if (keys["ArrowLeft"] || keys["a"]) {
+          camera.position.addScaledVector(right, -10);
+        }
+
+        if (keys["ArrowRight"] || keys["d"]) {
+          camera.position.addScaledVector(right, 10);
+        }
       }
 
       renderer.render(scene, camera);
 
-      requestAnimationFrame(render);
+      animationFrame = requestAnimationFrame(render);
     }
 
-    requestAnimationFrame(render);
+    animationFrame = requestAnimationFrame(render);
+
+    return () => {
+      document.removeEventListener("keydown", keydownListener);
+      document.removeEventListener("keyup", keyupListener);
+      document.removeEventListener("mouseup", mouseupListener);
+      document.removeEventListener("mousedown", mousedownListener);
+      document.removeEventListener("mousemove", mousemoveListener);
+
+      cancelAnimationFrame(animationFrame);
+    };
   }, [canvasRef, ghost, map]);
 
-  return <canvas ref={canvasRef}></canvas>;
+  return <canvas ref={canvasRef} style={{ userSelect: "none" }}></canvas>;
 }

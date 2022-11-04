@@ -262,7 +262,7 @@ export default class MapParser extends EventEmitter {
     const r = this.float();
     const g = this.float();
     const b = this.float();
-    return { r, g, b };
+    return new Color(r, g, b);
   }
 
   transform(): Transform {

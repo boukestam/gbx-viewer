@@ -5,8 +5,9 @@ import MapParser from "./parser/parser";
 import { Chunk } from "./parser/types";
 import { Renderer } from "./Renderer";
 
-const mapUrl = "/data/Simple TECH 1.Map.Gbx";
-const replayUrl = "/data/Simple TECH 1.Replay.Gbx";
+//const mapUrl = "/data/Simple TECH 1.Map.Gbx";
+const mapUrl = "/data/TestBlocks.Map.Gbx";
+const replayUrl = "/data/TestBlocks.Replay.Gbx";
 
 export interface GhostSamples extends Ghost {
   samples: Sample[];
@@ -32,14 +33,37 @@ function getChunk<T>(chunks: Chunk[], id: number) {
   return chunks.find((chunk) => chunk.id === id) as T | undefined;
 }
 
-async function loadMap(url: string): Promise<Environment> {
+async function loadMap(
+  url: string
+): Promise<{ environment: Environment; ghost?: GhostSamples }> {
   const result = await loadGbx(url);
+
+  console.log(result);
 
   const environment = getChunk<Environment>(result.body, 0x0304301f);
 
   if (!environment) throw new Error("No environment found in map file");
 
-  return environment;
+  const ghost = getChunk<any>(
+    getChunk<any>(result.body, 50704397)?.raceValidateGhost.chunks || [],
+    0x03092000
+  );
+
+  return { environment, ghost: ghost && parseGhost(ghost) };
+}
+
+function parseGhost(ghost: Ghost): GhostSamples {
+  const samples: Sample[] = [];
+  for (const chunk of ghost.recordData.chunks) {
+    const sampleChunk = chunk as { samples?: Sample[] };
+    if (sampleChunk.samples) {
+      for (const sample of sampleChunk.samples) {
+        if (sample.transform) samples.push(sample);
+      }
+    }
+  }
+
+  return { ...ghost, samples: samples };
 }
 
 async function loadGhost(url: string): Promise<GhostSamples> {
@@ -54,17 +78,7 @@ async function loadGhost(url: string): Promise<GhostSamples> {
 
   if (!ghost) throw new Error("No ghost found in map file");
 
-  const samples: Sample[] = [];
-  for (const chunk of ghost.recordData.chunks) {
-    const sampleChunk = chunk as { samples?: Sample[] };
-    if (sampleChunk.samples) {
-      for (const sample of sampleChunk.samples) {
-        if (sample.transform) samples.push(sample);
-      }
-    }
-  }
-
-  return { ...ghost, samples: samples };
+  return parseGhost(ghost);
 }
 
 function App() {
@@ -72,8 +86,11 @@ function App() {
   const [ghost, setGhost] = useState<GhostSamples | null>(null);
 
   useEffect(() => {
-    loadMap(mapUrl).then(setMap);
-    loadGhost(replayUrl).then(setGhost);
+    loadMap(mapUrl).then((result) => {
+      setMap(result.environment);
+      if (result.ghost) setGhost(result.ghost);
+      else loadGhost(replayUrl).then(setGhost);
+    });
   }, []);
 
   return (

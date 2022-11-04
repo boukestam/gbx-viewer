@@ -1,9 +1,25 @@
 import * as THREE from "three";
 
-export interface Color {
+export class Color {
   r: number;
   g: number;
   b: number;
+
+  constructor(r: number, g: number, b: number) {
+    this.r = r;
+    this.g = g;
+    this.b = b;
+  }
+
+  toTHREE() {
+    return new THREE.Color(
+      this.r, this.g, this.b
+    )
+  }
+
+  static zero() {
+    return new Color(0, 0, 0);
+  }
 }
 
 export interface FileRef {
