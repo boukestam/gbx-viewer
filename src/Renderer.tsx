@@ -4,7 +4,8 @@ import { Environment } from "./parser/nodes";
 import * as THREE from "three";
 import { Transform, Vec3 } from "./parser/types";
 import { GhostSamples } from "./App";
-import { createRoad, hexToSrgb } from "./MeshGenerator";
+import { hexToSrgb } from "./utils/color";
+import { createBlock } from "./blocks/block";
 
 const { GLTFLoader } = require("three/addons/loaders/GLTFLoader.js");
 
@@ -28,13 +29,13 @@ export function Renderer({
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.setClearColor(0x00b4e2);
 
-    const fov = 75;
+    const fov = 45;
     const aspect = 2; // the canvas default
     const near = 1;
-    const far = 1000;
+    const far = 10000;
     const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
 
-    let controlType: "free" | "follow" = "follow";
+    let controlType: "free" | "follow" = "free";
 
     const scene = new THREE.Scene();
 
@@ -68,12 +69,8 @@ export function Renderer({
 
     const trackCenter = Vec3.zero();
 
-    const roadBlocks = map.blocks.filter((block) =>
-      block.blockName.includes("Road")
-    );
-
-    for (const block of roadBlocks) {
-      const blockMesh = createRoad(block.blockName);
+    for (const block of map.blocks) {
+      const blockMesh = createBlock(block.blockName);
 
       const mesh = blockMesh.mesh.clone();
 
@@ -81,10 +78,12 @@ export function Renderer({
         blockMesh.offset
       );
 
-      mesh.rotateY(-block.rotation * (Math.PI / 2) + Math.PI);
+      mesh.rotateY(
+        -block.rotation * (Math.PI / 2) + Math.PI + blockMesh.rotation
+      );
       mesh.position.set(pos.x, pos.y, pos.z);
 
-      trackCenter.add(pos.div(roadBlocks.length));
+      trackCenter.add(pos.div(map.blocks.length));
 
       scene.add(mesh);
     }
@@ -104,8 +103,8 @@ export function Renderer({
       return needResize;
     }
 
-    console.log(roadBlocks);
-    console.log(roadBlocks.map((block) => block.blockName));
+    console.log(map.blocks);
+    console.log(map.blocks.map((block) => block.blockName).join("\n"));
 
     const loader = new GLTFLoader();
 
@@ -132,7 +131,6 @@ export function Renderer({
     );
 
     const keydownListener = (e: KeyboardEvent) => {
-      console.log(e.key);
       keys[e.key] = true;
     };
     const keyupListener = (e: KeyboardEvent) => {
@@ -147,10 +145,11 @@ export function Renderer({
     };
     const mousemoveListener = (e: MouseEvent) => {
       if (keys["Mouse0"]) {
-        camera.quaternion.y -= e.movementX * 0.002;
-        camera.quaternion.x -= e.movementY * 0.002;
-        camera.quaternion.normalize();
-        camera.up.set(0, 1, 0);
+        camera.rotateOnWorldAxis(
+          new THREE.Vector3(0, 1, 0),
+          -e.movementX * 0.002
+        );
+        camera.rotateOnAxis(new THREE.Vector3(1, 0, 0), -e.movementY * 0.002);
       }
     };
 
@@ -163,9 +162,13 @@ export function Renderer({
 
     let startTime = -1;
     let animationFrame = 0;
+    let previousTime = 0;
 
     function render(time: number) {
       let originalTime = time;
+
+      const delta = time - previousTime;
+      previousTime = time;
 
       if (startTime === -1) {
         startTime = time;
@@ -179,7 +182,8 @@ export function Renderer({
       );
       if (sampleIndex === -1) {
         startTime = originalTime;
-        return requestAnimationFrame(render);
+        render(originalTime);
+        return;
       }
       const sample = ghost.samples[sampleIndex];
       const sampleTransform = sample.transform as Transform;
@@ -189,9 +193,6 @@ export function Renderer({
         car.position.set(samplePosition.x, samplePosition.y, samplePosition.z);
 
         car.rotation.setFromQuaternion(sampleTransform.rotation.toTHREE());
-
-        sun.position.set(car.position.x, car.position.y + 500, car.position.z);
-        sun.target = car;
       }
 
       if (resizeRendererToDisplaySize()) {
@@ -217,30 +218,42 @@ export function Renderer({
           cameraPosition.z
         );
         camera.lookAt(car.position);
+
+        sun.position.set(car.position.x, car.position.y + 500, car.position.z);
+        sun.target = car;
       } else if (controlType === "free") {
         const direction = new THREE.Vector3();
         camera.getWorldDirection(direction);
-
         const right = direction
           .clone()
           .cross(new THREE.Vector3(0, 1, 0))
           .normalize();
-
+        const speed = 50 * delta;
         if (keys["ArrowUp"] || keys["w"]) {
-          camera.position.addScaledVector(direction, 10);
+          camera.position.addScaledVector(direction, speed);
         }
-
         if (keys["ArrowDown"] || keys["s"]) {
-          camera.position.addScaledVector(direction, -10);
+          camera.position.addScaledVector(direction, -speed);
         }
-
         if (keys["ArrowLeft"] || keys["a"]) {
-          camera.position.addScaledVector(right, -10);
+          camera.position.addScaledVector(right, -speed);
+        }
+        if (keys["ArrowRight"] || keys["d"]) {
+          camera.position.addScaledVector(right, speed);
+        }
+        if (keys["Shift"]) {
+          camera.position.addScaledVector(new THREE.Vector3(0, 1, 0), -speed);
+        }
+        if (keys[" "]) {
+          camera.position.addScaledVector(new THREE.Vector3(0, 1, 0), speed);
         }
 
-        if (keys["ArrowRight"] || keys["d"]) {
-          camera.position.addScaledVector(right, 10);
-        }
+        sun.position.set(
+          camera.position.x,
+          camera.position.y + 500,
+          camera.position.z
+        );
+        sun.target = camera;
       }
 
       renderer.render(scene, camera);
@@ -251,11 +264,11 @@ export function Renderer({
     animationFrame = requestAnimationFrame(render);
 
     return () => {
-      document.removeEventListener("keydown", keydownListener);
-      document.removeEventListener("keyup", keyupListener);
-      document.removeEventListener("mouseup", mouseupListener);
-      document.removeEventListener("mousedown", mousedownListener);
-      document.removeEventListener("mousemove", mousemoveListener);
+      // document.removeEventListener("keydown", keydownListener);
+      // document.removeEventListener("keyup", keyupListener);
+      // document.removeEventListener("mouseup", mouseupListener);
+      // document.removeEventListener("mousedown", mousedownListener);
+      // document.removeEventListener("mousemove", mousemoveListener);
 
       cancelAnimationFrame(animationFrame);
     };

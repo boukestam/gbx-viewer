@@ -5,9 +5,11 @@ import MapParser from "./parser/parser";
 import { Chunk } from "./parser/types";
 import { Renderer } from "./Renderer";
 
+const name = "TestBlocks";
+
 //const mapUrl = "/data/Simple TECH 1.Map.Gbx";
-const mapUrl = "/data/TestBlocks.Map.Gbx";
-const replayUrl = "/data/TestBlocks.Replay.Gbx";
+const mapUrl = `/data/${name}.Map.Gbx`;
+const replayUrl = `/data/${name}.Replay.Gbx`;
 
 export interface GhostSamples extends Ghost {
   samples: Sample[];
