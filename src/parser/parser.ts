@@ -230,6 +230,14 @@ export default class MapParser extends EventEmitter {
     return new Vec3(x, y, z);
   }
 
+  quat(): Quaternion {
+    const x = this.float();
+    const y = this.float();
+    const z = this.float();
+    const w = this.float();
+    return new Quaternion(x, y, z, w);
+  }
+
   int2(): Vec2 {
     const x = this.uint32();
     const y = this.uint32();
@@ -294,9 +302,9 @@ export default class MapParser extends EventEmitter {
   }
 
   bool() {
-    const value = this.int32();
+    const value = this.uint32();
     if (value > 1) throw new Error("Invalid boolean: " + value);
-    return value === 1;
+    return value !== 0;
   }
 
   byte() {
@@ -349,7 +357,10 @@ export default class MapParser extends EventEmitter {
   skipUntilFacade() {
     while (true) {
       const n = this.uint32();
-      if (n === 0xfacade01) return;
+      if (n === 0xfacade01) {
+        this.skip(-4);
+        return;
+      }
     }
   }
 

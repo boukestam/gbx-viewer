@@ -5,7 +5,7 @@ import MapParser from "./parser/parser";
 import { Chunk } from "./parser/types";
 import { Renderer } from "./Renderer";
 
-const name = "TestPlatforms";
+const name = "Stuartville Track";
 
 //const mapUrl = "/data/Simple TECH 1.Map.Gbx";
 const mapUrl = `/data/${name}.Map.Gbx`;

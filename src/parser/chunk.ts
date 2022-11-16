@@ -261,18 +261,16 @@ export function parseChunk(p: MapParser, chunkId: number, extraData?: any): any 
     const stopWhenLeave = p.bool();
     return { stopWhenLeave };
   } else if (chunkId === 0x0307900d) {
-    const version = p.uint32();
-    const listVersion = p.uint32();
+    const version = p.int32();
+    const listVersion = p.int32();
 
-    const tracks = p.list(() => {
-      return p.nodeRef();
-    });
+    const tracks = p.list(() => p.nodeRef());
 
     const clipName = p.string();
 
-    if (p.uint32() !== 10) {
-      p.parser.seek(p.parser.tell() - 4);
-    }
+    console.log(p.parser.tell(), p.buffer!.length);
+    console.log(tracks);
+    console.log(tracks, clipName);
 
     const stopWhenLeave = p.bool();
     p.skip(4);
@@ -298,20 +296,23 @@ export function parseChunk(p: MapParser, chunkId: number, extraData?: any): any 
   // CGameCtnMediaTrack
   else if (chunkId === 0x03078001) {
     const trackName = p.string();
+    const version = p.int32();
+
+    const tracks = p.list(() => p.nodeRef());
 
     p.skip(4);
 
-    const tracks = p.list(() => {
-      return p.nodeRef();
-    });
-
-    p.skip(4);
-
-    return { trackName, tracks };
+    return { version, trackName, tracks };
+  } else if (chunkId === 0x03078002) {
+    const keepPlaying = p.bool();
+    return { keepPlaying };
+  } else if (chunkId === 0x030780043) {
+    const isReadOnly = p.bool();
+    return { isReadOnly };
   } else if (chunkId === 0x03078004) {
     const keepPlaying = p.bool();
-    p.skip(4);
-    return { keepPlaying };
+    const isReadOnly = p.bool();
+    return { keepPlaying, isReadOnly };
   } else if (chunkId === 0x03078005) {
     const version = p.uint32();
     const isKeepPlaying = p.bool();
@@ -623,6 +624,46 @@ export function parseChunk(p: MapParser, chunkId: number, extraData?: any): any 
     return {version, recordData};
   }
 
+  // CGameCtnMediaBlockCameraOrbital
+  else if (chunkId === 0x030A0001) {
+    p.skipUntilFacade();
+    return;
+  }
+
+  // CGameCtnMediaBlockCameraPath
+  else if (chunkId === 0x030a1003) {
+    const version = p.int32();
+    const positions = p.list(() => {
+      const time = p.float();
+
+      const position = p.vec3();
+      const pitchYawRoll = p.vec3();
+      const fov = p.float();
+
+      let nearZ = 0;
+
+      if (version >= 3) {
+        nearZ = p.float();
+      }
+
+      const anchorRot = p.bool();
+      const anchor = p.int32();
+      const anchorVis = p.bool();
+      const target = p.int32();
+      const targetPosition = p.vec3();
+
+      const weight = p.float();
+      p.quat();
+
+      if (version >= 4) {
+        p.skip(8);
+      }
+
+      return {time, position, pitchYawRoll, fov, nearZ, anchorRot, anchor, anchorVis, target, targetPosition, weight};
+    });
+    return {version, positions};
+  }
+
   // CGameCtnMediaBlockCameraCustom
   else if (chunkId === 0x030a2006) {
     const version = 6 + p.uint32();
@@ -726,19 +767,17 @@ export function parseChunk(p: MapParser, chunkId: number, extraData?: any): any 
 
   // CGameCtnMediaBlockTransitionFade
   else if (chunkId === 0x030ab000) {
-    const numKeys = p.uint32();
-    const keys: any[] = [];
-    for (let i = 0; i < numKeys; i++) {
+    const keys = p.list(() => {
       const time = p.float();
       const opacity = p.float();
-      keys.push({ time, opacity });
-    }
+      return {time, opacity};
+    });
 
-    const transitionColor = p.color();
+    const color = p.color();
 
     p.skip(4);
 
-    return { keys, transitionColor };
+    return { keys, color };
   }
 
   // CGameCtnMacroBlockInfo

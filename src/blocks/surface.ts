@@ -39,7 +39,7 @@ const bumpColorMiddle = hexToSrgb('#5D585B');
 const bumpColorLeft = hexToSrgb('#3E3D3B');
 const bumpBorderColor = hexToSrgb('#B32022');
 
-export function getMiddlePoints(left: number, right: number, height: number, stepSize: number = 0.2) {
+export function getMiddlePoints(left: number, right: number, height: number, stepSize: number = 0.1) {
   const points: Vec3[] = [];
 
   if (left < right) {
@@ -55,7 +55,7 @@ export function getMiddlePoints(left: number, right: number, height: number, ste
   return points;
 }
 
-export function getMiddlePointCount(left: number, right: number, height: number, stepSize: number = 0.2) {
+export function getMiddlePointCount(left: number, right: number, height: number, stepSize: number = 0.1) {
   let count = 0;
   
   if (left < right) {
@@ -208,7 +208,7 @@ export function createSurface(name: string, surface: Surface, result: CurveDescr
   const blockMesh = {
     mesh: createMesh(out),
     offset: worldOffset,
-    rotation: result.rotation || 0
+    rotation: result.rotation || Vec3.zero()
   };
 
   cache[name] = blockMesh;

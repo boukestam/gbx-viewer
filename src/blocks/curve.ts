@@ -14,7 +14,7 @@ export interface CurveDescription {
   }[];
   size: Vec3;
   offset: Vec3;
-  rotation?: number;
+  rotation?: Vec3;
 }
 
 export function curve() {
@@ -95,19 +95,35 @@ export function loop(reverse?: boolean, ratio?: StepFunction) {
   };
 }
 
-export function pipe(reverse?: boolean, ratio?: StepFunction) {
-  const bezier = !reverse ? 
-    new Bezier(
-      -1, 1, 
-      -1, 0.5,
-      0, 0,
-      1, 0,
-    ) : 
-    new Bezier(
-      1, 1,
-      1, 0.5,
-      0, 0,
-      -1, 0, 
+export function pipe(flipHorizontal?: boolean, flipVertical?: boolean, ratio?: StepFunction) {
+  const bezier = !flipHorizontal ? 
+    (!flipVertical ? 
+      new Bezier(
+        -1, 1, 
+        -1, 0.5,
+        0, 0,
+        1, 0,
+      ) :
+      new Bezier(
+        -1, 1, 
+        0, 1,
+        1, 0.5,
+        1, 0,
+      )
+    ) :
+    (!flipVertical ? 
+      new Bezier(
+        1, 1,
+        1, 0.5,
+        0, 0,
+        -1, 0, 
+      ) : 
+      new Bezier(
+        1, 1,
+        0, 1,
+        -1, 0.5,
+        -1, 0, 
+      )
     );
 
   return {

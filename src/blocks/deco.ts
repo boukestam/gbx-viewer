@@ -6,6 +6,6 @@ export function createDeco(name: string): BlockMesh {
   return {
     mesh: new THREE.Mesh(),
     offset: Vec3.zero(),
-    rotation: 0
+    rotation: Vec3.zero()
   };
 }

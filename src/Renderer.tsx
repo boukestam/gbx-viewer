@@ -46,7 +46,7 @@ export function Renderer({
     sun.shadow.mapSize.width = 2048;
     sun.shadow.mapSize.height = 2048;
     sun.shadow.camera.near = 10;
-    sun.shadow.camera.far = 1000;
+    sun.shadow.camera.far = 5000;
     sun.shadow.camera.left = -2000;
     sun.shadow.camera.right = 2000;
     sun.shadow.camera.top = -2000;
@@ -79,8 +79,10 @@ export function Renderer({
       );
 
       mesh.rotateY(
-        -block.rotation * (Math.PI / 2) + Math.PI + blockMesh.rotation
+        -block.rotation * (Math.PI / 2) + Math.PI + blockMesh.rotation.y
       );
+      mesh.rotateX(blockMesh.rotation.x);
+      mesh.rotateZ(blockMesh.rotation.z);
       mesh.position.set(pos.x, pos.y, pos.z);
 
       trackCenter.add(pos.div(map.blocks.length));

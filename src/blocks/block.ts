@@ -6,7 +6,7 @@ import { createRoad } from "./road";
 export interface BlockMesh {
   mesh: THREE.Mesh;
   offset: Vec3;
-  rotation: number;
+  rotation: Vec3;
 }
 
 export function createBlock(name: string): BlockMesh {

@@ -282,7 +282,7 @@ const roads: {[name: string]: () => CurveDescription} = {
     curves: [curve(), tilt(false, "TopLeftUp")],
     size: new Vec3(2, 1, 2),
     offset: new Vec3(0, -1, 0),
-    rotation: Math.PI * 0.5
+    rotation: new Vec3(0, Math.PI * 0.5, 0)
   }),
 
   RoadTechTiltTransition1DownRight: () => ({
@@ -315,7 +315,7 @@ const roads: {[name: string]: () => CurveDescription} = {
     curves: [curve(), tilt(true, "TopLeftDown")],
     size: new Vec3(2, 1, 2),
     offset: new Vec3(0, -1, 0),
-    rotation: Math.PI * 0.5
+    rotation: new Vec3(0, Math.PI * 0.5, 0)
   }),
 }
 
