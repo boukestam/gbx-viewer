@@ -1,173 +1,232 @@
 import { Bezier } from "bezier-js";
 import { Vec3 } from "../parser/types";
 
-const RAISED: {[name: string]: number} = {
-  RoadTechTiltCurve2DownLeft: 1,
-  RoadTechTiltCurve2DownRight: -1,
-  RoadTechTiltCurve2UpLeft: 2,
-  RoadTechTiltCurve2UpRight: -2
-};
+export type StepFunction = (ratio: number, t: number) => number;
 
-export function getTrackCurve(name: string) {
-  const curves = [];
+export interface CurveDescription {
+  curves: {
+    bezier?: Bezier;
+    f?: StepFunction;
+    ratio?: StepFunction;
+    axis: Vec3;
+    right?: boolean;
+    xAsStep?: boolean;
+  }[];
+  size: Vec3;
+  offset: Vec3;
+  rotation?: number;
+}
 
-  const size = new Vec3(1, 1, 1);
-  const offset = new Vec3(0, -1, 0);
+export function curve() {
+  const bezier = new Bezier(
+    -1, -1, 
+    -1, 0,
+    0, 1, 
+    1, 1
+  );
 
-  if (name.includes("Curve")) {
-    const amountIndex = name.indexOf("Curve") + 5;
-    const amount = parseInt(name[amountIndex]);
+  return {
+    bezier, 
+    axis: new Vec3(1, 0, 2),
+    right: true
+  };
+}
 
-    const bezier = new Bezier(
-      -1, -1, 
-      -1, 0,
-      0, 1, 
-      1, 1
-    );
+export function chicane(left: boolean) {
+  const bezier = left ? new Bezier(
+    -0.5, -1, 
+    -0.5, 0.2,
+    0.5, -0.2,
+    0.5, 1,
+  ) : new Bezier(
+    0.5, -1, 
+    0.5, 0.2,
+    -0.5, -0.2,
+    -0.5, 1,
+  );
 
-    size.x = amount;
-    size.z = amount;
+  return {
+    bezier, 
+    axis: new Vec3(1, 0, 2)
+  };
+}
 
-    curves.push({
-      bezier, 
-      axis: new Vec3(1, 0, 2),
-      right: true
-    });
-  }
-
-  if (name.includes("Chicane")) {
-    const amountIndex = name.indexOf("X") + 1;
-    const amount = parseInt(name[amountIndex]);
-
-    const mul = name.includes("Left") ? -1 : 1;
-
-    const bezier = new Bezier(
-      -0.5, 1 * mul, 
-      -0.5, -0.2 * mul,
-      0.5, 0.2 * mul,
-      0.5, -1 * mul,
-    );
-
-    size.x = 2;
-    size.z = amount;
-
-    if (amount === 3) {
-      offset.x = 1;
-      offset.z = -1;
-    }
-
-    curves.push({
-      bezier, 
-      axis: new Vec3(1, 0, 2)
-    });
-  }
-
-  if (name.includes("Slope")) {
-    const amount0Index = name.indexOf("Base") + 4;
-    const amount1Index = name.indexOf("x") + 1;
-
-    let heightAmount, lengthAmount;
-
-    if (amount1Index === 0) {
-      lengthAmount = 1;
-      heightAmount = parseInt(name[amount0Index]) || 1;
-    } else {
-      lengthAmount = parseInt(name[amount0Index]);
-      heightAmount = parseInt(name[amount1Index]);
-    }
-
-    const bezier = new Bezier(
+export function slope(reverse?: boolean, ratio?: StepFunction) {
+  const bezier = !reverse ? 
+    new Bezier(
       -1, 1, 
       -0.2, 1,
       0.2, 0,
       1, 0,
+    ) : 
+    new Bezier(
+      -1, 0, 
+      -0.2, 0,
+      0.2, 1,
+      1, 1,
     );
 
-    size.z = lengthAmount;
-    size.y = heightAmount;
+  return {
+    bezier, 
+    axis: new Vec3(0, 4, 3),
+    ratio
+  };
+}
 
-    offset.y = -heightAmount;
-
-    if (lengthAmount === 2) {
-      offset.x = 1;
-      offset.z = -1;
-    }
-
-    curves.push({
-      bezier, 
-      axis: new Vec3(0, 4, 3)
-    });
-  }
-
-  if (name.includes("Tilt")) {
-    const height = 0.5;
-
-    let f;
-
-    if (name.includes("DownLeft")) {
-      f = (ratio: number, t: number) => (height + ratio * -height) * (1 - t);
-    } else if (name.includes("DownRight")) {
-      f = (ratio: number, t: number) => (height + ratio * -height) * t;
-    } else if (name.includes("UpLeft")) {
-      f = (ratio: number, t: number) => 1 - (height + ratio * -height) * t;
-    } else if (name.includes("UpRight")) {
-      f = (ratio: number, t: number) => 1 - (height + ratio * -height) * (1 - t);
-    } else {
-      f = (ratio: number, t: number) => height + ratio * -height;
-    }
-
-    curves.push({
-      f,
-      axis: new Vec3(0, 1, 0)
-    });
-  }
-
-  if (name in RAISED) {
-    const height = RAISED[name];
-
-    curves.push({
-      f: (ratio: number, t: number) => (height > 0 ? 1 - t : t) * Math.abs(height), 
-      axis: new Vec3(0, 1, 0)
-    });
-  }
-
-  if (name.includes("Transition")) {
-    const amountIndex = name.indexOf("Transition") + 10;
-    const amount = parseInt(name[amountIndex]);
-
-    const bezier = new Bezier(
-      0, -1, 
-      0, 0, 
-      0, 1
+export function loop(reverse?: boolean, ratio?: StepFunction) {
+  const bezier = !reverse ? 
+    new Bezier(
+      -1, 1, 
+      -1, 0.5,
+      0, 0,
+      1, 0,
+    ) : 
+    new Bezier(
+      -1, 1, 
+      0, 1,
+      1, 0.5,
+      1, 0,
     );
 
-    size.z = amount;
-    if (name.includes("Curve")) size.x = amount;
+  return {
+    bezier, 
+    axis: new Vec3(0, 4, 3),
+    ratio
+  };
+}
 
-    curves.push({
-      bezier, 
-      axis: new Vec3(1, 0, 2)
-    });
-  }
-
-  if (name.includes("Straight") || name.includes("Switch") || name.includes("Start") || name.includes("Finish")) {
-    const bezier = new Bezier(
-      0, -1, 
-      0, 0, 
-      0, 1
+export function pipe(reverse?: boolean, ratio?: StepFunction) {
+  const bezier = !reverse ? 
+    new Bezier(
+      -1, 1, 
+      -1, 0.5,
+      0, 0,
+      1, 0,
+    ) : 
+    new Bezier(
+      1, 1,
+      1, 0.5,
+      0, 0,
+      -1, 0, 
     );
 
-    curves.push({
-      bezier, 
-      axis: new Vec3(1, 0, 2)
-    });
+  return {
+    f: (x: number, t: number) => {
+      const intersections = bezier.intersects({p1: {x: x, y: -1}, p2: {x: x, y: 1}});
+      const pt = bezier.get(intersections[0] as number);
+      return pt.y;
+    }, 
+    axis: new Vec3(0, 1, 0),
+    ratio,
+    xAsStep: true,
+  };
+}
+
+export function concave(amount: number = 2, ratio?: StepFunction) {
+  const bezier = new Bezier(
+    -1, 0, 
+    -0.2, amount * 0.2,
+    0.2, amount * 0.2,
+    1, 0,
+  );
+
+  return {
+    bezier, 
+    axis: new Vec3(0, 4, 0),
+    ratio
+  };
+}
+
+export function convex(amount: number = 2, ratio?: StepFunction) {
+  const bezier = new Bezier(
+    -1, 0, 
+    -0.2, amount * -0.2,
+    0.2, amount * -0.2,
+    1, 0,
+  );
+
+  return {
+    bezier, 
+    axis: new Vec3(0, 4, 0),
+    ratio
+  };
+}
+
+export function tilt (reverse?: boolean, direction?: "TopLeftUp" | "BottomLeftUp" | "BottomLeftDown" | "TopLeftDown") {
+  const height = 0.5;
+
+  let f;
+
+  if (direction === "TopLeftUp") {
+    f = (ratio: number, t: number) => (height + (reverse ? ratio * -1 : ratio) * -height) * (1 - t);
+  } else if (direction === "BottomLeftUp") {
+    f = (ratio: number, t: number) => (height + (reverse ? ratio * -1 : ratio) * -height) * t;
+  } else if (direction === "BottomLeftDown") {
+    f = (ratio: number, t: number) => 1 - (height + (reverse ? ratio * -1 : ratio) * -height) * t;
+  } else if (direction === "TopLeftDown") {
+    f = (ratio: number, t: number) => 1 - (height + (reverse ? ratio * -1 : ratio) * -height) * (1 - t);
+  } else {
+    f = (ratio: number, t: number) => height + (reverse ? ratio * -1 : ratio) * -height;
   }
 
-  let rotation = 0;
+  return {
+    f,
+    axis: new Vec3(0, 1, 0)
+  };
+}
 
-  if (name === 'RoadTechTiltTransition2UpLeftCurveIn') {
-    rotation = Math.PI * 0.5;
-  }
+export function straight (ratio?: StepFunction) {
+  const bezier = new Bezier(
+    0, -1, 
+    0, 0, 
+    0, 1
+  );
 
-  return {curves, size, offset, rotation};
+  return {
+    bezier, 
+    axis: new Vec3(1, 0, 2),
+    ratio
+  };
+}
+
+export function flat (ratio?: StepFunction) {
+  const bezier = new Bezier(
+    -1, 0,
+    0, 0,
+    1, 0,
+  );
+
+  return {
+    bezier, 
+    axis: new Vec3(0, 4, 3),
+    ratio
+  };
+}
+
+export function raised (height: number, ratio?: StepFunction) {
+  const bezier = height < 0 ? 
+    new Bezier(
+      -1, 0, 
+      0, height * -0.5,
+      1, height * -1,
+    ) : 
+    new Bezier(
+      -1, height, 
+      0, height * 0.5,
+      1, 0,
+    );
+
+  return {
+    bezier, 
+    axis: new Vec3(0, 4, 0),
+    ratio
+  };
+}
+
+export function up (height: number, ratio?: StepFunction) {
+  return {
+    f: (ratio: number, t: number) => height, 
+    axis: new Vec3(0, 1, 0),
+    ratio
+  };
 }

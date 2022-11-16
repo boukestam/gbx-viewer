@@ -1,156 +1,341 @@
-import { Vec3, Color } from "../parser/types";
+import { Vec3 } from "../parser/types";
 import { hexToSrgb } from "../utils/color";
 import { BlockMesh } from "./block";
-import { getTrackCurve } from "./curve";
-import { shape, createMesh, MeshOutput } from "./mesh";
+import { chicane, concave, convex, curve, CurveDescription, flat, raised, slope, straight, tilt, up } from "./curve";
+import { createSurface, getTrackSurface, Surface, trackHeight } from "./surface";
 
-const cache: {[name: string]: BlockMesh} = {};
-
-const left = -0.9;
-const right = 0.9;
+const roadLeft = -0.9;
+const roadRight = 0.9;
 const borderHeight = 0.4;
 const borderWidth = 0.125;
-
-const trackLineHeight = 0.25;
 const trackLineWidth = 0.1875;
-
-const trackHeight = 0.025;
-const trackHeightTech = trackLineHeight;
-
-const bumpWidthLeft = 0.09375;
-const bumpWidthMiddle = 0.125;
-const bumpHeightLine = trackLineHeight + 0.075;
-const bumpHeightLeft = trackLineHeight + 0.14;
-const bumpHeightMiddle = trackLineHeight + 0.2;
-const bumpHeightTop = trackLineHeight + 0.25;
 
 const borderColor = hexToSrgb('#ffffff');
 const borderSideColor = hexToSrgb('#000000');
-
-const trackLine = hexToSrgb('#ffffff');
-
 const edgeColor = hexToSrgb('#1D2633');
-const dirtColor = hexToSrgb('#D07B5D');
 
-const techColor = hexToSrgb('#B2ACAF');
-const techBorderColor = hexToSrgb('#437E5A');
+const roads: {[name: string]: () => CurveDescription} = {
+  RoadTechStraight: () => ({
+    curves: [straight()],
+    size: new Vec3(1, 1, 1),
+    offset: new Vec3(0, -1, 0)
+  }),
 
-const grassColor = hexToSrgb('#6A8642');
-const waterColor = hexToSrgb('#8EE4F2');
-const iceColor = hexToSrgb('#ffffff');
+  RoadTechCurve1: () => ({
+    curves: [curve()],
+    size: new Vec3(1, 1, 1),
+    offset: new Vec3(0, -1, 0)
+  }),
+  RoadTechCurve2: () => ({
+    curves: [curve()],
+    size: new Vec3(2, 1, 2),
+    offset: new Vec3(0, -1, 0)
+  }),
+  RoadTechCurve3: () => ({
+    curves: [curve()],
+    size: new Vec3(3, 1, 3),
+    offset: new Vec3(0, -1, 0)
+  }),
+  RoadTechCurve4: () => ({
+    curves: [curve()],
+    size: new Vec3(4, 1, 4),
+    offset: new Vec3(0, -1, 0)
+  }),
+  RoadTechCurve5: () => ({
+    curves: [curve()],
+    size: new Vec3(5, 1, 5),
+    offset: new Vec3(0, -1, 0)
+  }),
 
-const bumpColorTop = hexToSrgb('#C5BBB4');
-const bumpColorMiddle = hexToSrgb('#5D585B');
-const bumpColorLeft = hexToSrgb('#3E3D3B');
-const bumpBorderColor = hexToSrgb('#B32022');
+  RoadTechChicaneX2Left: () => ({
+    curves: [chicane(true)],
+    size: new Vec3(2, 1, 2),
+    offset: new Vec3(0, -1, 0)
+  }),
+  RoadTechChicaneX3Left: () => ({
+    curves: [chicane(true)],
+    size: new Vec3(2, 1, 3),
+    offset: new Vec3(1, -1, -1)
+  }),
+  RoadTechChicaneX2Right: () => ({
+    curves: [chicane(false)],
+    size: new Vec3(2, 1, 2),
+    offset: new Vec3(0, -1, 0)
+  }),
+  RoadTechChicaneX3Right: () => ({
+    curves: [chicane(false)],
+    size: new Vec3(2, 1, 3),
+    offset: new Vec3(1, -1, -1)
+  }),
 
-export function getTrackSurface(name: string): {points: Vec3[]; colors: Color[]} {
-  if (name.includes("Dirt")) return { 
-    points: [
-      new Vec3(left + borderWidth + trackLineWidth, trackHeight, 0),
-      new Vec3(right - borderWidth - trackLineWidth, trackHeight, 0),
-    ],
-    colors: [
-      trackLine,
-      dirtColor,
-      trackLine,
-    ]
-  };
+  RoadTechSlopeBase2: () => ({
+    curves: [slope()],
+    size: new Vec3(1, 2, 1),
+    offset: new Vec3(0, -2, 0)
+  }),
+  RoadTechSlopeBase: () => ({
+    curves: [slope()],
+    size: new Vec3(1, 1, 1),
+    offset: new Vec3(0, -1, 0)
+  }),
+  RoadTechSlopeBase2x1: () => ({
+    curves: [slope()],
+    size: new Vec3(1, 1, 2),
+    offset: new Vec3(1, -1, -1)
+  }),
 
-  if (name.includes("Water")) return { 
-    points: [
-      new Vec3(left + borderWidth + trackLineWidth, trackHeight, 0),
-      new Vec3(right - borderWidth - trackLineWidth, trackHeight, 0),
-    ],
-    colors: [
-      trackLine,
-      waterColor,
-      trackLine,
-    ]
-  };
+  RoadTechSlopeStraight: () => ({
+    curves: [straight(), raised(1)],
+    size: new Vec3(1, 1, 1),
+    offset: new Vec3(0, -1, 0)
+  }),
+  RoadTechSlopeStart2x1: () => ({
+    curves: [straight(), convex(), raised(2)],
+    size: new Vec3(1, 1, 2),
+    offset: new Vec3(1, -1, -1)
+  }),
+  RoadTechSlopeEnd2x1: () => ({
+    curves: [straight(), concave(), raised(2)],
+    size: new Vec3(1, 1, 2),
+    offset: new Vec3(1, -1, -1)
+  }),
 
-  if (name.includes("Grass")) return { 
-    points: [
-      new Vec3(left + borderWidth + trackLineWidth, trackHeight, 0),
-      new Vec3(right - borderWidth - trackLineWidth, trackHeight, 0),
-    ],
-    colors: [
-      trackLine,
-      grassColor,
-      trackLine,
-    ]
-  };
+  RoadTechSlopeUTop: () => ({
+    curves: [straight(), concave(1)],
+    size: new Vec3(1, 1, 1),
+    offset: new Vec3(0, -1, 0)
+  }),
+  RoadTechSlopeUTopX2: () => ({
+    curves: [straight(), concave()],
+    size: new Vec3(1, 1, 2),
+    offset: new Vec3(1, -1, -1)
+  }),
+  RoadTechSlopeUBottom: () => ({
+    curves: [straight(), convex(), up(1)],
+    size: new Vec3(1, 1, 1),
+    offset: new Vec3(0, -1, 0)
+  }),
+  RoadTechSlopeUBottomX2: () => ({
+    curves: [straight(), convex(), up(1)],
+    size: new Vec3(1, 1, 2),
+    offset: new Vec3(1, -1, -1)
+  }),
+  RoadTechSlopeUBottomInGround: () => ({
+    curves: [straight(), convex(1)],
+    size: new Vec3(1, 1, 1),
+    offset: new Vec3(0, -1, 0)
+  }),
+  RoadTechSlopeUBottomX2InGround: () => ({
+    curves: [straight(), convex(1.25)],
+    size: new Vec3(1, 1, 2),
+    offset: new Vec3(1, -1, -1)
+  }),
 
-  if (name.includes("Ice")) return { 
-    points: [
-      new Vec3(left + borderWidth + trackLineWidth, trackHeight, 0),
-      new Vec3(right - borderWidth - trackLineWidth, trackHeight, 0),
-    ],
-    colors: [
-      trackLine,
-      iceColor,
-      trackLine,
-    ]
-  };
+  RoadTechChicaneX2SlopeLeft: () => ({
+    curves: [chicane(true), raised(2)],
+    size: new Vec3(2, 1, 2),
+    offset: new Vec3(0, -1, 0)
+  }),
+  RoadTechChicaneX3SlopeLeft: () => ({
+    curves: [chicane(true), raised(2)],
+    size: new Vec3(2, 1, 3),
+    offset: new Vec3(1, -1, -1)
+  }),
+  RoadTechChicaneX2SlopeRight: () => ({
+    curves: [chicane(false), raised(2)],
+    size: new Vec3(2, 1, 2),
+    offset: new Vec3(0, -1, 0)
+  }),
+  RoadTechChicaneX3SlopeRight: () => ({
+    curves: [chicane(false), raised(2)],
+    size: new Vec3(2, 1, 3),
+    offset: new Vec3(1, -1, -1)
+  }),
 
-  if (name.includes("Tech")) return { 
-    points: [
-      new Vec3(left + borderWidth + trackLineWidth, trackHeightTech, 0),
-      new Vec3(right - borderWidth - trackLineWidth, trackHeightTech, 0),
-    ],
-    colors: [
-      techBorderColor,
-      techColor,
-      techBorderColor,
-    ]
-  };
+  RoadTechTiltStraight: () => ({
+    curves: [straight(), tilt(true)],
+    size: new Vec3(1, 1, 1),
+    offset: new Vec3(0, -1, 0)
+  }),
+  RoadTechTiltSwitchRight: () => ({
+    curves: [slope(false, (r, t) => (r + 1) * 0.5), slope(true, (r, t) => (r - 1) * -0.5)],
+    size: new Vec3(1, 1, 1),
+    offset: new Vec3(0, -1, 0)
+  }),
+  RoadTechTiltSwitchLeft: () => ({
+    curves: [slope(true, (r, t) => (r + 1) * 0.5), slope(false, (r, t) => (r - 1) * -0.5)],
+    size: new Vec3(1, 1, 1),
+    offset: new Vec3(0, -1, 0)
+  }),
 
-  if (name.includes("Bump")) return { 
-    points: [
-      new Vec3(left + borderWidth + trackLineWidth, bumpHeightLine, 0),
-      new Vec3(left + borderWidth + trackLineWidth + bumpWidthLeft, bumpHeightLeft, 0),
-      new Vec3(left + borderWidth + trackLineWidth + bumpWidthLeft + bumpWidthMiddle, bumpHeightMiddle, 0),
-      
-      new Vec3(0, bumpHeightTop, 0),
+  RoadTechChicaneX2TiltLeft: () => ({
+    curves: [chicane(true), raised(-2), tilt(true)],
+    size: new Vec3(2, 1, 2),
+    offset: new Vec3(0, -1, 0)
+  }),
+  RoadTechChicaneX3TiltLeft: () => ({
+    curves: [chicane(true), raised(-2), tilt(true)],
+    size: new Vec3(2, 1, 3),
+    offset: new Vec3(1, -1, -1)
+  }),
+  RoadTechChicaneX2TiltRight: () => ({
+    curves: [chicane(false), raised(2), tilt(true)],
+    size: new Vec3(2, 1, 2),
+    offset: new Vec3(0, -1, 0)
+  }),
+  RoadTechChicaneX3TiltRight: () => ({
+    curves: [chicane(false), raised(2), tilt(true)],
+    size: new Vec3(2, 1, 3),
+    offset: new Vec3(1, -1, -1)
+  }),
 
-      new Vec3(right - borderWidth - trackLineWidth - bumpWidthLeft - bumpWidthMiddle, bumpHeightMiddle, 0),
-      new Vec3(right - borderWidth - trackLineWidth - bumpWidthLeft, bumpHeightLeft, 0),
-      new Vec3(right - borderWidth - trackLineWidth, bumpHeightLine, 0),
-    ],
-    colors: [
-      bumpBorderColor,
-      bumpColorLeft,
-      bumpColorMiddle,
+  RoadTechTiltCurve1: () => ({
+    curves: [curve(), tilt()],
+    size: new Vec3(1, 1, 1),
+    offset: new Vec3(0, -1, 0)
+  }),
+  RoadTechTiltCurve2: () => ({
+    curves: [curve(), tilt()],
+    size: new Vec3(2, 1, 2),
+    offset: new Vec3(0, -1, 0)
+  }),
+  RoadTechTiltCurve3: () => ({
+    curves: [curve(), tilt()],
+    size: new Vec3(3, 1, 3),
+    offset: new Vec3(0, -1, 0)
+  }),
+  RoadTechTiltCurve4: () => ({
+    curves: [curve(), tilt()],
+    size: new Vec3(4, 1, 4),
+    offset: new Vec3(0, -1, 0)
+  }),
 
-      bumpColorTop,
-      bumpColorTop,
+  RoadTechTiltCurve1DownLeft: () => ({
+    curves: [curve(), tilt(false, "TopLeftUp")],
+    size: new Vec3(1, 1, 1),
+    offset: new Vec3(0, -1, 0)
+  }),
+  RoadTechTiltCurve1DownRight: () => ({
+    curves: [curve(), tilt(false, "BottomLeftUp")],
+    size: new Vec3(1, 1, 1),
+    offset: new Vec3(0, -1, 0)
+  }),
+  RoadTechTiltCurve1UpLeft: () => ({
+    curves: [curve(), tilt(false, "BottomLeftDown")],
+    size: new Vec3(1, 1, 1),
+    offset: new Vec3(0, -1, 0)
+  }),
+  RoadTechTiltCurve1UpRight: () => ({
+    curves: [curve(), tilt(false, "TopLeftDown")],
+    size: new Vec3(1, 1, 1),
+    offset: new Vec3(0, -1, 0)
+  }),
 
-      bumpColorMiddle,
-      bumpColorLeft,
-      bumpBorderColor,
-    ]
-  };
+  RoadTechTiltCurve2DownLeft: () => ({
+    curves: [curve(), tilt(false, "TopLeftUp"), raised(1)],
+    size: new Vec3(2, 1, 2),
+    offset: new Vec3(0, -1, 0)
+  }),
+  RoadTechTiltCurve2DownRight: () => ({
+    curves: [curve(), tilt(false, "BottomLeftUp"), raised(1)],
+    size: new Vec3(2, 1, 2),
+    offset: new Vec3(0, -1, 0)
+  }),
+  RoadTechTiltCurve2UpLeft: () => ({
+    curves: [curve(), tilt(false, "BottomLeftDown"), raised(2)],
+    size: new Vec3(2, 1, 2),
+    offset: new Vec3(0, -1, 0)
+  }),
+  RoadTechTiltCurve2UpRight: () => ({
+    curves: [curve(), tilt(false, "TopLeftDown"), raised(-2)],
+    size: new Vec3(2, 1, 2),
+    offset: new Vec3(0, -1, 0)
+  }),
 
-  throw new Error("Unknown track type: " + name);
+  RoadTechTiltTransition1UpRight: () => ({
+    curves: [flat((r, t) => (r + 1) * 0.5), slope(true, (r, t) => (r - 1) * -0.5)],
+    size: new Vec3(1, 1, 1),
+    offset: new Vec3(0, -1, 0)
+  }),
+  RoadTechTiltTransition2UpRight: () => ({
+    curves: [flat((r, t) => (r + 1) * 0.5), slope(true, (r, t) => (r - 1) * -0.5)],
+    size: new Vec3(1, 1, 2),
+    offset: new Vec3(1, -1, -1)
+  }),
+  RoadTechTiltTransition2UpRightCurveIn: () => ({
+    curves: [curve(), tilt(false, "BottomLeftUp")],
+    size: new Vec3(2, 1, 2),
+    offset: new Vec3(0, -1, 0)
+  }),
+
+  RoadTechTiltTransition1UpLeft: () => ({
+    curves: [slope(true, (r, t) => (r + 1) * 0.5), flat((r, t) => (r - 1) * -0.5)],
+    size: new Vec3(1, 1, 1),
+    offset: new Vec3(0, -1, 0)
+  }),
+  RoadTechTiltTransition2UpLeft: () => ({
+    curves: [slope(true, (r, t) => (r + 1) * 0.5), flat((r, t) => (r - 1) * -0.5)],
+    size: new Vec3(1, 1, 2),
+    offset: new Vec3(1, -1, -1)
+  }),
+  RoadTechTiltTransition2UpLeftCurveIn: () => ({
+    curves: [curve(), tilt(false, "TopLeftUp")],
+    size: new Vec3(2, 1, 2),
+    offset: new Vec3(0, -1, 0),
+    rotation: Math.PI * 0.5
+  }),
+
+  RoadTechTiltTransition1DownRight: () => ({
+    curves: [slope(false, (r, t) => (r + 1) * 0.5), flat((r, t) => (r - 1) * -0.5), up(1, (r, t) => (r - 1) * -0.5)],
+    size: new Vec3(1, 1, 1),
+    offset: new Vec3(0, -1, 0)
+  }),
+  RoadTechTiltTransition2DownRight: () => ({
+    curves: [slope(false, (r, t) => (r + 1) * 0.5), flat((r, t) => (r - 1) * -0.5), up(1, (r, t) => (r - 1) * -0.5)],
+    size: new Vec3(1, 1, 2),
+    offset: new Vec3(1, -1, -1)
+  }),
+  RoadTechTiltTransition2DownRightCurveIn: () => ({
+    curves: [curve(), tilt(true, "BottomLeftDown")],
+    size: new Vec3(2, 1, 2),
+    offset: new Vec3(0, -1, 0)
+  }),
+
+  RoadTechTiltTransition1DownLeft: () => ({
+    curves: [flat((r, t) => (r + 1) * 0.5), slope(false, (r, t) => (r - 1) * -0.5), up(1, (r, t) => (r + 1) * 0.5)],
+    size: new Vec3(1, 1, 1),
+    offset: new Vec3(0, -1, 0)
+  }),
+  RoadTechTiltTransition2DownLeft: () => ({
+    curves: [flat((r, t) => (r + 1) * 0.5), slope(false, (r, t) => (r - 1) * -0.5), up(1, (r, t) => (r + 1) * 0.5)],
+    size: new Vec3(1, 1, 2),
+    offset: new Vec3(1, -1, -1)
+  }),
+  RoadTechTiltTransition2DownLeftCurveIn: () => ({
+    curves: [curve(), tilt(true, "TopLeftDown")],
+    size: new Vec3(2, 1, 2),
+    offset: new Vec3(0, -1, 0),
+    rotation: Math.PI * 0.5
+  }),
 }
 
-export function createRoad(name: string): BlockMesh {
-  if (name in cache) return cache[name];
-
-  const surface = getTrackSurface(name);
+function getRoadSurface(name: string): Surface {
+  const surface = getTrackSurface(name, roadLeft + borderWidth + trackLineWidth, roadRight - borderWidth - trackLineWidth);
 
   const points = [
-    new Vec3(left, 0, 0),
-    new Vec3(left, borderHeight, 0),
-    new Vec3(left + borderWidth, borderHeight, 0),
-    new Vec3(left + borderWidth, trackLineHeight, 0),
+    new Vec3(roadLeft, 0, 0),
+    new Vec3(roadLeft, borderHeight, 0),
+    new Vec3(roadLeft + borderWidth, borderHeight, 0),
+    new Vec3(roadLeft + borderWidth, trackHeight, 0),
+    new Vec3(roadLeft + borderWidth + trackLineWidth, trackHeight, 0),
 
     ...surface.points,
 
-    new Vec3(right - borderWidth, trackLineHeight, 0),
-    new Vec3(right - borderWidth, borderHeight, 0),
-    new Vec3(right, borderHeight, 0),
-    new Vec3(right, 0, 0),
+    new Vec3(roadRight - borderWidth - trackLineWidth, trackHeight, 0),
+    new Vec3(roadRight - borderWidth, trackHeight, 0),
+    new Vec3(roadRight - borderWidth, borderHeight, 0),
+    new Vec3(roadRight, borderHeight, 0),
+    new Vec3(roadRight, 0, 0),
   ];
 
   const colors = [
@@ -158,80 +343,34 @@ export function createRoad(name: string): BlockMesh {
     borderColor,
     borderColor,
     borderSideColor,
+    surface.lineColor,
 
     ...surface.colors,
 
+    surface.lineColor,
     borderSideColor,
     borderColor,
     borderColor,
     borderColor,
     edgeColor,
+    edgeColor,
   ];
 
-  const out: MeshOutput = {
-    vertices: [],
-    colors: [],
+  return {...surface, points, colors};
+}
+
+export function getRoadCurve(name: string): CurveDescription {
+  if (!(name in roads)) return {
+    curves: [straight()],
+    size: new Vec3(1, 1, 1),
+    offset: new Vec3(0, -1, 0)
   };
 
-  let f = (point: Vec3, step: number) =>
-    point.sub(new Vec3(0, 0, 16)).add(new Vec3(0, 0, 32).mul(step));
+  return roads[name]();
+}
 
-  const result = getTrackCurve(name);
-
-  const numSteps = 20;
-  const pos = result.size.add(result.offset);
-  const worldOffset = new Vec3(32 - pos.x * 16, -pos.y * 4, 32 - pos.z * 16);
-
-  f = (point: Vec3, step: number) => {
-    const t = step / numSteps;
-
-    const getF = (a: 'x' | 'y' | 'z') => {
-      let sum = 0;
-      let found = false;
-
-      for (const curve of result.curves) {
-        if (curve.axis[a] === 0) continue;
-
-        let x = curve.right ? (point.x + 1) : point.x;
-
-        if (curve.bezier) {
-          const pt = curve.bezier.get(t);
-          const nv = curve.bezier.normal(t);
-
-          if (curve.axis[a] === 1) return pt.x * result.size[a] + x * -nv.x;
-          if (curve.axis[a] === 2) return pt.y * result.size[a] + x * -nv.y;
-          if (curve.axis[a] === 3) return pt.x * result.size[a] + point.y * nv.x;
-          if (curve.axis[a] === 4) return pt.y * result.size[a] + point.y * nv.y;
-        }
-
-        if (curve.f) {
-          if (curve.axis[a] === 1) sum += point.y + curve.f(x, t);
-        }
-
-        found = true;
-      }
-
-      if (!found) return point[a] * result.size[a];
-
-      return sum;
-    };
-
-    return new Vec3(
-      getF('x') * 16, 
-      getF('y') * 8,
-      getF('z') * 16
-    );
-  };
-
-  shape(points, colors, f, numSteps, out);
-
-  const blockMesh = {
-    mesh: createMesh(out),
-    offset: worldOffset,
-    rotation: result.rotation
-  };
-
-  cache[name] = blockMesh;
-
-  return blockMesh;
+export function createRoad(name: string): BlockMesh {
+  const curve = getRoadCurve(name);
+  const surface = getRoadSurface(name);
+  return createSurface(name, surface, curve);
 }

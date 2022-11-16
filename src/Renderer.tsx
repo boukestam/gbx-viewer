@@ -47,10 +47,10 @@ export function Renderer({
     sun.shadow.mapSize.height = 2048;
     sun.shadow.camera.near = 10;
     sun.shadow.camera.far = 1000;
-    sun.shadow.camera.left = -500;
-    sun.shadow.camera.right = 500;
-    sun.shadow.camera.top = -500;
-    sun.shadow.camera.bottom = 500;
+    sun.shadow.camera.left = -2000;
+    sun.shadow.camera.right = 2000;
+    sun.shadow.camera.top = -2000;
+    sun.shadow.camera.bottom = 2000;
 
     const sky = new THREE.AmbientLight(0xffffff, 0.5);
     scene.add(sky);
@@ -167,7 +167,7 @@ export function Renderer({
     function render(time: number) {
       let originalTime = time;
 
-      const delta = time - previousTime;
+      const delta = (time - previousTime) / 1000;
       previousTime = time;
 
       if (startTime === -1) {
@@ -228,7 +228,7 @@ export function Renderer({
           .clone()
           .cross(new THREE.Vector3(0, 1, 0))
           .normalize();
-        const speed = 50 * delta;
+        const speed = 250 * delta;
         if (keys["ArrowUp"] || keys["w"]) {
           camera.position.addScaledVector(direction, speed);
         }

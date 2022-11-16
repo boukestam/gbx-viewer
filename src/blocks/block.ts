@@ -10,8 +10,11 @@ export interface BlockMesh {
 }
 
 export function createBlock(name: string): BlockMesh {
-  if (name.startsWith("Road")) return createRoad(name);
+  if (name.includes("Road")) return createRoad(name);
   if (name.startsWith("Deco")) return createDeco(name);
   if (name.startsWith("Platform")) return createPlatform(name);
-  throw new Error("Unknown block type: " + name);
+
+  return createDeco(name);
+  
+  //throw new Error("Unknown block type: " + name);
 }

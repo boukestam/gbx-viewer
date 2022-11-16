@@ -7,6 +7,15 @@ export interface MeshOutput {
   colors: number[];
 }
 
+function area(data: number[]) {
+  let sum = 0;
+  for (let i = 0, j = data.length - 2; i < data.length; i += 2) {
+    sum += (data[j] - data[i]) * (data[i + 1] + data[j + 1]);
+    j = i;
+  }
+  return Math.abs(sum);
+}
+
 function triangle(a: Vec3, b: Vec3, c: Vec3, color: Color, out: MeshOutput) {
   out.vertices.push(a.x, a.y, a.z, b.x, b.y, b.z, c.x, c.y, c.z);
   out.colors.push(
@@ -22,6 +31,51 @@ function triangle(a: Vec3, b: Vec3, c: Vec3, color: Color, out: MeshOutput) {
   );
 }
 
+function polygon(
+  points: Vec3[], 
+  f: (point: Vec3, step: number) => Vec3, 
+  step: number, 
+  color: Color, 
+  flip: boolean,
+  out: MeshOutput
+) {
+  const transformed = points.map(p => f(p, step));
+
+  const xyArea = area(transformed.reduce((a: number[], v) => {
+    a.push(v.x, v.y);
+    return a;
+  }, []));
+  const xzArea = area(transformed.reduce((a: number[], v) => {
+    a.push(v.x, v.z);
+    return a;
+  }, []));
+  const yzArea = area(transformed.reduce((a: number[], v) => {
+    a.push(v.y, v.z);
+    return a;
+  }, []));
+
+  const isXY = xyArea > xzArea && xyArea > yzArea;
+  const isXZ = xzArea > xyArea && xzArea > yzArea;
+
+  const coords = [];
+  for (const t of transformed) {
+    if (isXY) coords.push(t.x, t.y);
+    else if (isXZ) coords.push(t.x, t.z);
+    else coords.push(t.y, t.z);
+  }
+  const triangles = earcut(coords);
+
+  for (let i = 0; i < triangles.length; i += 3) {
+    triangle(
+      transformed[triangles[i + (flip ? 2 : 0)]],
+      transformed[triangles[i + 1]],
+      transformed[triangles[i + (flip ? 0 : 2)]],
+      color,
+      out
+    );
+  }
+}
+
 export function shape(
   points: Vec3[],
   colors: Color[],
@@ -29,19 +83,7 @@ export function shape(
   steps: number,
   out: MeshOutput
 ) {
-  const coords = [];
-  for (const point of points) coords.push(point.x, point.y);
-  const triangles = earcut(coords);
-
-  for (let i = 0; i < triangles.length; i += 3) {
-    triangle(
-      f(points[triangles[i + 2]], 0),
-      f(points[triangles[i + 1]], 0),
-      f(points[triangles[i]], 0),
-      colors[0],
-      out
-    );
-  }
+  polygon(points, f, 0, colors[0], true, out);
 
   for (let i = 0; i < steps; i++) {
     for (let j = 0; j < points.length; j++) {
@@ -63,15 +105,7 @@ export function shape(
     }
   }
 
-  for (let i = 0; i < triangles.length; i += 3) {
-    triangle(
-      f(points[triangles[i]], steps),
-      f(points[triangles[i + 1]], steps),
-      f(points[triangles[i + 2]], steps),
-      colors[points.length - 1],
-      out
-    );
-  }
+  polygon(points, f, steps, colors[points.length], false, out);
 }
 
 export function createMesh(out: MeshOutput) {
