@@ -2,12 +2,10 @@ import React, { useEffect, useState } from "react";
 import "./App.css";
 import { CGameCtnChallenge, Ghost, Sample } from "./parser/nodes";
 import GameBoxParser from "./parser/parser";
-import { Node } from "./parser/types";
 import { Renderer } from "./Renderer";
 
-const name = "TestCurves";
+const name = "Stuartville Track";
 
-//const mapUrl = "/data/Simple TECH 1.Map.Gbx";
 const mapUrl = `/data/${name}.Map.Gbx`;
 const replayUrl = `/data/${name}.Replay.Gbx`;
 

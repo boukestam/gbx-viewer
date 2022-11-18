@@ -1,9 +1,10 @@
 import earcut from "earcut";
 import * as THREE from "three";
 import { ELayerType } from "../parser/classes/CPlugCrystal";
-import { GeometryLayer } from "../parser/nodes";
+import { GeometryLayer, Material } from "../parser/nodes";
 import { Vec3, Color } from "../parser/types";
 import { BlockMesh } from "./block";
+import { Colors } from "./colors";
 
 export interface MeshOutput {
   vertices: number[];
@@ -172,14 +173,20 @@ export function createCrystal(crystal: any): BlockMesh {
     colors: []
   };
 
-  const color = new Color(0, 0, 0);
+  const getColor = (material: Material) => {
+    if (material.link.includes("Dirt")) return Colors.dirtColor;
+    if (material.link.includes("Grass")) return Colors.grassColor;
+    if (material.link.includes("Ice")) return Colors.iceColor;
+    if (material.link.includes("Tech")) return Colors.techColor;
+    return Colors.bottomColor;
+  };
 
   for (const face of geometry.faces) {
     if (face.verts.length === 3) {
-      triangle(face.verts[0].position, face.verts[1].position, face.verts[2].position, color, out);
+      triangle(face.verts[0].position, face.verts[1].position, face.verts[2].position, getColor(face.material), out);
     } else if (face.verts.length === 4) {
-      triangle(face.verts[0].position, face.verts[1].position, face.verts[2].position, color, out);
-      triangle(face.verts[0].position, face.verts[2].position, face.verts[3].position, color, out);
+      triangle(face.verts[0].position, face.verts[1].position, face.verts[2].position, getColor(face.material), out);
+      triangle(face.verts[0].position, face.verts[2].position, face.verts[3].position, getColor(face.material), out);
     }
   }
   

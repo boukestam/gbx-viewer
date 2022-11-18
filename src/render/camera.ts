@@ -7,7 +7,7 @@ export class Camera extends THREE.PerspectiveCamera {
   listeners: any = {};
   keys: { [key: string]: boolean } = {};
 
-  controlType: 'follow' | 'free' = 'free';
+  mode: 'follow' | 'free' = 'free';
 
   init(trackCenter: Vec3) {
     this.position.x = 1000;
@@ -19,6 +19,10 @@ export class Camera extends THREE.PerspectiveCamera {
   start() {
     this.listeners.keydownListener = (e: KeyboardEvent) => {
       this.keys[e.key] = true;
+
+      if (e.key === 'c') {
+        this.mode = this.mode === 'follow' ? 'free' : 'follow';
+      }
     };
     this.listeners.keyupListener = (e: KeyboardEvent) => {
       this.keys[e.key] = false;
@@ -48,7 +52,7 @@ export class Camera extends THREE.PerspectiveCamera {
   }
 
   update(delta: number, car: THREE.Object3D, sun: THREE.DirectionalLight, currentSample: Sample, nextSample: Sample) {
-    if (this.controlType === "follow" && car) {
+    if (this.mode === "follow" && car) {
       const sampleTransform = currentSample.transform as Transform;
 
       const sampleVelocity = nextSample
@@ -67,7 +71,7 @@ export class Camera extends THREE.PerspectiveCamera {
 
       sun.position.set(car.position.x, car.position.y + 500, car.position.z);
       sun.target = car;
-    } else if (this.controlType === "free") {
+    } else if (this.mode === "free") {
       const direction = new THREE.Vector3();
       this.getWorldDirection(direction);
       const right = direction

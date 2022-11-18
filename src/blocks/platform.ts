@@ -1,6 +1,6 @@
-import { Color, Vec3 } from "../parser/types";
-import { hexToSrgb } from "../utils/color";
+import { Vec3 } from "../parser/types";
 import { BlockMesh } from "./block";
+import { Colors } from "./colors";
 import {
   concave,
   convex,
@@ -23,8 +23,7 @@ import {
   Surface,
 } from "./surface";
 
-const edgeColor = hexToSrgb("#444444");
-const bottomColor = new Color(0, 0, 0);
+
 
 const platforms: { [name: string]: () => CurveDescription } = {
  Base: () => ({
@@ -400,14 +399,14 @@ function getPlatformSurface(name: string): Surface {
   const points = [...surface.points, ...getMiddlePoints(1, -1, 0)];
 
   const colors = [
-    edgeColor,
+    Colors.edgeColor,
 
     ...surface.colors,
 
-    edgeColor,
+    Colors.edgeColor,
 
-    ...new Array(getMiddlePointCount(1, -1, 0) - 1).fill(bottomColor),
-    edgeColor,
+    ...new Array(getMiddlePointCount(1, -1, 0) - 1).fill(Colors.bottomColor),
+    Colors.edgeColor,
   ];
 
   return { ...surface, points, colors };

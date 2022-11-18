@@ -27,14 +27,16 @@ export function startRender(canvas: HTMLCanvasElement, map: CGameCtnChallenge, g
   sun.castShadow = true;
   scene.add(sun);
 
-  sun.shadow.mapSize.width = 2048;
-  sun.shadow.mapSize.height = 2048;
+  const shadowMapSize = 400;
+
+  sun.shadow.mapSize.width = 4096;
+  sun.shadow.mapSize.height = 4096;
   sun.shadow.camera.near = 10;
   sun.shadow.camera.far = 5000;
-  sun.shadow.camera.left = -2000;
-  sun.shadow.camera.right = 2000;
-  sun.shadow.camera.top = -2000;
-  sun.shadow.camera.bottom = 2000;
+  sun.shadow.camera.left = -shadowMapSize;
+  sun.shadow.camera.right = shadowMapSize;
+  sun.shadow.camera.top = -shadowMapSize;
+  sun.shadow.camera.bottom = shadowMapSize;
 
   const sky = new THREE.AmbientLight(0xffffff, 0.5);
   scene.add(sky);

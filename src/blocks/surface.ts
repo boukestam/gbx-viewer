@@ -1,6 +1,7 @@
 import { Vec3, Color } from "../parser/types";
 import { hexToSrgb } from "../utils/color";
 import { BlockMesh } from "./block";
+import { Colors } from "./colors";
 import { CurveDescription } from "./curve";
 import { MeshOutput, shape, createMesh } from "./mesh";
 
@@ -20,22 +21,6 @@ const bumpHeightLine = trackHeight + 0.075;
 const bumpHeightLeft = trackHeight + 0.14;
 const bumpHeightMiddle = trackHeight + 0.2;
 const bumpHeightTop = trackHeight + 0.25;
-
-const trackLine = hexToSrgb('#ffffff');
-
-const dirtColor = hexToSrgb('#D07B5D');
-
-const techColor = hexToSrgb('#B2ACAF');
-const techBorderColor = hexToSrgb('#437E5A');
-
-const grassColor = hexToSrgb('#6A8642');
-const waterColor = hexToSrgb('#8EE4F2');
-const iceColor = hexToSrgb('#ffffff');
-
-const bumpColorTop = hexToSrgb('#C5BBB4');
-const bumpColorMiddle = hexToSrgb('#5D585B');
-const bumpColorLeft = hexToSrgb('#3E3D3B');
-const bumpBorderColor = hexToSrgb('#B32022');
 
 export function getMiddlePoints(left: number, right: number, height: number, stepSize: number = 0.1) {
   const points: Vec3[] = [];
@@ -69,38 +54,38 @@ export function getMiddlePointCount(left: number, right: number, height: number,
 
 export function getTrackSurface(name: string, left: number, right: number): Surface {
   if (name.includes("Dirt")) return { 
-    points: getMiddlePoints(left, right, trackHeightDirt),
-    colors: new Array(getMiddlePointCount(left, right, trackHeightDirt)).fill(dirtColor),
-    color: dirtColor,
-    lineColor: trackLine
+    points: getMiddlePoints(left, right, trackHeight),
+    colors: new Array(getMiddlePointCount(left, right, trackHeight)).fill(Colors.dirtColor),
+    color: Colors.dirtColor,
+    lineColor: Colors.trackLine
   };
 
   if (name.includes("Water")) return { 
     points: getMiddlePoints(left, right, trackHeight),
-    colors: new Array(getMiddlePointCount(left, right, trackHeight)).fill(waterColor),
-    color: waterColor,
-    lineColor: trackLine
+    colors: new Array(getMiddlePointCount(left, right, trackHeight)).fill(Colors.waterColor),
+    color: Colors.waterColor,
+    lineColor: Colors.trackLine
   };
 
   if (name.includes("Grass")) return { 
     points: getMiddlePoints(left, right, trackHeight),
-    colors: new Array(getMiddlePointCount(left, right, trackHeight)).fill(grassColor),
-    color: grassColor,
-    lineColor: trackLine
+    colors: new Array(getMiddlePointCount(left, right, trackHeight)).fill(Colors.grassColor),
+    color: Colors.grassColor,
+    lineColor: Colors.trackLine
   };
 
   if (name.includes("Ice")) return { 
     points: getMiddlePoints(left, right, trackHeight),
-    colors: new Array(getMiddlePointCount(left, right, trackHeight)).fill(iceColor),
-    color: iceColor,
-    lineColor: trackLine
+    colors: new Array(getMiddlePointCount(left, right, trackHeight)).fill(Colors.iceColor),
+    color: Colors.iceColor,
+    lineColor: Colors.trackLine
   };
 
   if (name.includes("Tech")) return { 
     points: getMiddlePoints(left, right, trackHeight),
-    colors: new Array(getMiddlePointCount(left, right, trackHeight) - 1).fill(techColor),
-    color: techColor,
-    lineColor: techBorderColor
+    colors: new Array(getMiddlePointCount(left, right, trackHeight) - 1).fill(Colors.techColor),
+    color: Colors.techColor,
+    lineColor: Colors.techBorderColor
   };
 
   if (name.includes("Bump")) return { 
@@ -116,17 +101,17 @@ export function getTrackSurface(name: string, left: number, right: number): Surf
       new Vec3(right, bumpHeightLine, 0),
     ],
     colors: [
-      bumpColorLeft,
-      bumpColorMiddle,
+      Colors.bumpColorLeft,
+      Colors.bumpColorMiddle,
 
-      bumpColorTop,
-      bumpColorTop,
+      Colors.bumpColorTop,
+      Colors.bumpColorTop,
 
-      bumpColorMiddle,
-      bumpColorLeft,
+      Colors.bumpColorMiddle,
+      Colors.bumpColorLeft,
     ],
-    color: bumpColorTop,
-    lineColor: bumpBorderColor
+    color: Colors.bumpColorTop,
+    lineColor: Colors.bumpBorderColor
   };
 
   throw new Error("Unknown track type: " + name);

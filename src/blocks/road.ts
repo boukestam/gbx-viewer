@@ -1,6 +1,6 @@
 import { Vec3 } from "../parser/types";
-import { hexToSrgb } from "../utils/color";
 import { BlockMesh } from "./block";
+import { Colors } from "./colors";
 import { chicane, concave, convex, curve, CurveDescription, flat, raised, slope, straight, tilt, up } from "./curve";
 import { createSurface, getTrackSurface, Surface, trackHeight } from "./surface";
 
@@ -9,10 +9,6 @@ const roadRight = 0.9;
 const borderHeight = 0.4;
 const borderWidth = 0.125;
 const trackLineWidth = 0.1875;
-
-const borderColor = hexToSrgb('#ffffff');
-const borderSideColor = hexToSrgb('#000000');
-const edgeColor = hexToSrgb('#1D2633');
 
 const roads: {[name: string]: () => CurveDescription} = {
   Straight: () => ({
@@ -339,21 +335,21 @@ function getRoadSurface(name: string): Surface {
   ];
 
   const colors = [
-    edgeColor,
-    borderColor,
-    borderColor,
-    borderSideColor,
+    Colors.edgeColor,
+    Colors.borderColor,
+    Colors.borderColor,
+    Colors.borderSideColor,
     surface.lineColor,
 
     ...surface.colors,
 
     surface.lineColor,
-    borderSideColor,
-    borderColor,
-    borderColor,
-    borderColor,
-    edgeColor,
-    edgeColor,
+    Colors.borderSideColor,
+    Colors.borderColor,
+    Colors.borderColor,
+    Colors.borderColor,
+    Colors.edgeColor,
+    Colors.edgeColor,
   ];
 
   return {...surface, points, colors};

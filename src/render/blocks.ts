@@ -1,9 +1,9 @@
-import { Scene } from "three";
+import * as THREE from "three";
 import { createAnchoredObject, createBlock } from "../blocks/block";
 import { CGameCtnChallenge } from "../parser/nodes";
 import { Vec3 } from "../parser/types";
 
-export function loadBlocks(map: CGameCtnChallenge, scene: Scene) {
+export function loadBlocks(map: CGameCtnChallenge, scene: THREE.Scene) {
   let trackCenter = Vec3.zero();
   let blockCount = 0;
 
@@ -35,21 +35,19 @@ export function loadBlocks(map: CGameCtnChallenge, scene: Scene) {
 
       const mesh = blockMesh.mesh.clone();
 
-      const pos = object.absolutePositionInMap;
-      
-      console.log(object);
+      mesh.position.set(object.pivotPosition.x, object.pivotPosition.y, object.pivotPosition.z);
 
-      mesh.position.set(-object.pivotPosition.x, object.pivotPosition.y, object.pivotPosition.z);
+      const pivot = new THREE.Group();
+      pivot.add(mesh);
 
-      mesh.rotateOnWorldAxis(new Vec3(0, 1, 0).toTHREE(), object.pitchYawRoll.x);
-      //mesh.rotateOnWorldAxis
+      pivot.rotateOnAxis(new Vec3(0, 1, 0).toTHREE(), object.pitchYawRoll.x);
 
-      mesh.position.set(pos.x, pos.y, pos.z);
+      pivot.position.set(object.absolutePositionInMap.x, object.absolutePositionInMap.y, object.absolutePositionInMap.z);
 
-      trackCenter = trackCenter.add(pos);
+      trackCenter = trackCenter.add(object.absolutePositionInMap);
       blockCount++;
 
-      scene.add(mesh);
+      scene.add(pivot);
     }
   }
 
