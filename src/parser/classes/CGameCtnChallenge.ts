@@ -324,5 +324,47 @@ export function parseChunk(p: GameBoxParser, chunkId: number, node: Node): any {
     }
 
     return true;
+  } else if (chunkId === 0x03043069) {
+    const version = p.int32();
+
+    if (version > 0) throw new Error("Version not supported");
+
+    const dict: {[id: number]: any} = {};
+
+    for (const block of node.blocks) {
+      const macroBlockId = p.int32();
+
+      if (macroBlockId === -1) continue;
+
+      if (macroBlockId in dict) {
+        block.macroBlockReference = dict[macroBlockId];
+      } else {
+        const instance = {};
+        dict[macroBlockId] = instance;
+        block.macroBlockReference = instance;
+      }
+    }
+
+    for (const item of node.anchoredObjects) {
+      const macroBlockId = p.int32();
+
+      if (macroBlockId === -1) continue;
+
+      if (macroBlockId in dict) {
+        item.macroBlockReference = dict[macroBlockId];
+      } else {
+        const instance = {};
+        dict[macroBlockId] = instance;
+        item.macroBlockReference = instance;
+      }
+    }
+
+    const idFlagsPair = p.list(() => p.int2());
+
+    for (const pair of idFlagsPair) {
+      dict[pair.x].flags = pair.y;
+    }
+
+    return {macroBlockInstances: Object.values(dict)};
   }
 }

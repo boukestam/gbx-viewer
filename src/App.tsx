@@ -5,7 +5,7 @@ import GameBoxParser from "./parser/parser";
 import { Node } from "./parser/types";
 import { Renderer } from "./Renderer";
 
-const name = "Stuartville Track";
+const name = "TestCurves";
 
 //const mapUrl = "/data/Simple TECH 1.Map.Gbx";
 const mapUrl = `/data/${name}.Map.Gbx`;
@@ -28,6 +28,8 @@ async function loadGbx(url: string) {
   const parser = new GameBoxParser(Buffer.from(buffer));
   const result = parser.parse();
 
+  console.log(url, result);
+
   return result;
 }
 
@@ -44,7 +46,11 @@ async function loadMap(
   };
 }
 
-function parseGhost(ghost: Ghost): GhostSamples {
+function parseGhost(body: any): GhostSamples {
+  const ghost = body.recordData ? body : body.ghosts[0];
+
+  console.log(ghost);
+
   const samples: Sample[] = [];
   for (const sample of ghost.recordData.samples) {
     if (sample.transform) samples.push(sample);
@@ -67,7 +73,6 @@ function App() {
     loadMap(mapUrl)
       .then((result) => {
         setMap(result.map);
-        console.log(result.map);
         if (result.ghost) setGhost(result.ghost);
         else
           loadGhost(replayUrl)

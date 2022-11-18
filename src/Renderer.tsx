@@ -1,7 +1,7 @@
 import React, { createRef, useEffect } from "react";
 import { CGameCtnChallenge } from "./parser/nodes";
 import { GhostSamples } from "./App";
-import { render } from "./render/render";
+import { startRender } from "./render/render";
 
 export function Renderer({
   map,
@@ -15,7 +15,7 @@ export function Renderer({
   useEffect(() => {
     if (!canvasRef.current) return;
 
-    return render(canvasRef.current, map, ghost);
+    return startRender(canvasRef.current, map, ghost);
   }, [canvasRef, ghost, map]);
 
   return <canvas ref={canvasRef} style={{ userSelect: "none" }}></canvas>;

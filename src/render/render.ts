@@ -1,15 +1,14 @@
 import * as THREE from "three";
 import { GhostSamples } from "../App";
-import { createAnchoredObject, createBlock } from "../blocks/block";
 import { CGameCtnChallenge } from "../parser/nodes";
-import { Vec3, Transform } from "../parser/types";
+import { Transform } from "../parser/types";
 import { hexToSrgb } from "../utils/color";
 import { loadBlocks } from "./blocks";
 import { Camera } from "./camera";
 
 const { GLTFLoader } = require("three/addons/loaders/GLTFLoader.js");
 
-export function render(canvas: HTMLCanvasElement, map: CGameCtnChallenge, ghost: GhostSamples) {
+export function startRender(canvas: HTMLCanvasElement, map: CGameCtnChallenge, ghost: GhostSamples) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
   renderer.outputEncoding = THREE.sRGBEncoding;
   renderer.shadowMap.enabled = true;
@@ -21,8 +20,6 @@ export function render(canvas: HTMLCanvasElement, map: CGameCtnChallenge, ghost:
   const near = 1;
   const far = 10000;
   const camera = new Camera(fov, aspect, near, far);
-
-  let controlType: "free" | "follow" = "free";
 
   const scene = new THREE.Scene();
 
@@ -124,7 +121,6 @@ export function render(canvas: HTMLCanvasElement, map: CGameCtnChallenge, ghost:
     if (car) {
       const samplePosition = sampleTransform.position;
       car.position.set(samplePosition.x, samplePosition.y, samplePosition.z);
-
       car.rotation.setFromQuaternion(sampleTransform.rotation.toTHREE());
     }
 

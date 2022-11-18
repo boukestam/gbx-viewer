@@ -11,8 +11,6 @@ export interface Surface {
   lineColor: Color;
 }
 
-const cache: {[name: string]: BlockMesh} = {};
-
 export const trackHeight = 0.25;
 const trackHeightDirt = 0.025;
 
@@ -135,8 +133,6 @@ export function getTrackSurface(name: string, left: number, right: number): Surf
 }
 
 export function createSurface(name: string, surface: Surface, result: CurveDescription): BlockMesh {
-  if (name in cache) return cache[name];
-
   const out: MeshOutput = {
     vertices: [],
     colors: [],
@@ -210,8 +206,6 @@ export function createSurface(name: string, surface: Surface, result: CurveDescr
     offset: worldOffset,
     rotation: result.rotation || Vec3.zero()
   };
-
-  cache[name] = blockMesh;
 
   return blockMesh;
 }
