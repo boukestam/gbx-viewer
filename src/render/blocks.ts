@@ -35,9 +35,8 @@ export function loadBlocks(map: CGameCtnChallenge, scene: Scene) {
 
       const mesh = blockMesh.mesh.clone();
 
-      //const pos = object.absolutePositionInMap;
-      const pos = new Vec3(object.blockUnitCoord.x * 32, object.blockUnitCoord.y * 8 - 64, object.blockUnitCoord.z * 32).sub(object.pivotPosition);
-
+      const pos = object.absolutePositionInMap;
+      
       console.log(object);
 
       mesh.position.set(-object.pivotPosition.x, object.pivotPosition.y, object.pivotPosition.z);
