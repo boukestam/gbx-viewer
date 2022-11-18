@@ -7,22 +7,21 @@ import { parseChunk } from "./chunk";
 import { parseHeader } from "./header";
 
 import pako from "pako";
-import { FileRef, Vec3, Vec4, Transform, Vec2, Color, Quaternion, Chunk, Node } from "./types";
+import { FileRef, Vec3, Vec4, Transform, Vec2, Color, Quaternion, Node } from "./types";
 
 const lzo1x = require("./lzo1x.js");
 
 const skippableChunks = [
+  0x2e009001,
+
   0x03029002,
 
-  0x0303f007,
+  0x03043034, 0x03043036, 0x03043038, 0x0304303e, 0x03043044, 0x0304304f,
+  0x03043055, 0x03043057, 0x03043058, 0x03043059, 0x0304305a, 
+  0x0304305b, 0x0304305c, 0x0304305d,
+  0x0304305e, 0x0304305f, 0x03043060, 0x03043061, 0x03043064, 0x03043067, 
 
-  0x03043018, 0x03043019, 0x0304301c, 0x03043029, 0x03043034, 0x03043036,
-  0x03043038, 0x0304303d, 0x0304303e, 0x03043040, 0x03043042, 0x03043043,
-  0x03043044, 0x03043048, 0x0304304b, 0x0304304f, 0x03043050, 0x03043051,
-  0x03043052, 0x03043053, 0x03043054, 0x03043055, 0x03043056, 0x03043057,
-  0x03043058, 0x03043059, 0x0304305a, 0x0304305b, 0x0304305c, 0x0304305d,
-  0x0304305e, 0x0304305f, 0x03043060, 0x03043061, 0x03043062, 0x03043063,
-  0x03043064, 0x03043065, 0x03043066, 0x03043067, 0x03043068, 0x03043069,
+  0x0303f007,
 
   0x0305b00a, 0x0305b00e,
 
@@ -34,60 +33,74 @@ const skippableChunks = [
   0x03093020, 0x03093021, 0x03093022, 0x03093023, 0x03093025, 0x03093026,
   0x03093027, 0x03093028,
 
+  0x03101004, 0x03101005,
+
   0x0310d00b, 0x0310d00c, 0x0310d010, 0x0310d011,
 
-  0x2e009001,
-
   0x40000006,
+
+  0x09003004
 ];
 
 const parsableSkippableChunks = [
+  0x03043018, 0x03043019, 0x0304301c, 0x03043029, 
+  0x0304303d, 0x03043040, 0x03043042, 0x03043043,
+  0x03043048, 0x0304304b, 0x03043050, 0x03043051,
+  0x03043052, 0x03043053, 0x03043054, 0x03043056, 
+  0x03043062, 0x03043063,
+  0x03043065, 0x03043066, 0x03043068, 0x03043069,
+
   0x03092000, 0x03092005, 0x03092008, 0x03092009, 0x0309200a, 0x0309200b,
   0x03092013, 0x03092014, 0x03092017, 0x0309201d, 0x03092025,
 
   0x03093018
 ];
 
-export default class MapParser extends EventEmitter {
-  buffer?: Buffer;
-  file?: string;
+export default class GameBoxParser {
+  buffer: Buffer;
   parser: BufferReader;
-  debug: any;
-  map = new Map();
+
   lookbackSeen: boolean = false;
   lookbackStore: string[] = [];
-  nodeStore: { [key: number]: Node } = {};
+
+  nodeStore: { [key: number]: Node | null } = {};
+
   referenceTable: ReferenceTable | null = null;
 
   tableCompressed: boolean = false;
   bodyCompressed: boolean = false;
 
   constructor(buffer: Buffer) {
-    super();
-    this.parser = new BufferReader(buffer);
     this.buffer = buffer;
+    this.parser = new BufferReader(buffer);
   }
 
-  async parse() {
+  encapsulate(): GameBoxParser {
+    const e = new GameBoxParser(this.buffer);
+    e.parser = this.parser;
+    return e;
+  }
+
+  parse() {
     const header = parseHeader(this);
 
     this.referenceTable = parseRefTable(this);
 
-    const body = this.parseBody();
+    const body = this.parseBody(header.classId);
 
     return { header, body };
   }
 
-  parseBody() {
+  parseBody(classId: number): Node {
     if (this.bodyCompressed) {
       const data = this.compressedData("lzo");
-      this.buffer = data;
-      this.parser = new BufferReader(Buffer.from(data));
+      this.buffer = Buffer.from(data);
+      this.parser = new BufferReader(this.buffer);
     }
 
-    const node = this.parseNode();
+    const node = this.parseNode(classId);
 
-    return node;
+    return node as Node;
   }
 
   getChunkInfo(chunkId: number) {
@@ -104,8 +117,14 @@ export default class MapParser extends EventEmitter {
     return info;
   }
 
-  parseNode(): Chunk[] {
-    const chunks: Chunk[] = [];
+  parseNode(classId?: number): Node | null {
+    if (!classId) classId = this.uint32();
+
+    if (classId === 0xffffffff) {
+      return null;
+    }
+
+    const node: Node = {classId};
 
     while (true) {
       const chunkId = this.uint32();
@@ -130,12 +149,16 @@ export default class MapParser extends EventEmitter {
           this.skip(8); // skip and chunk size
         }
 
-        const data = parseChunk(this, chunkId);
-        if (data) chunks.push({ id: chunkId, ...data });
+        const data = parseChunk(this, chunkId, node);
+        if (data) {
+          for (const key in data) {
+            node[key] = data[key];
+          }
+        }
       }
     }
 
-    return chunks;
+    return node;
   }
 
   nodeRef(): Node | null {
@@ -151,12 +174,26 @@ export default class MapParser extends EventEmitter {
 
     // max value
     const classId = this.uint32();
-    const chunks = this.parseNode();
-
-    const node = { id: classId, chunks };
+    const node = this.parseNode(classId);
 
     this.nodeStore[index] = node;
     return node;
+  }
+
+  static decompressLZO(compressedData: Buffer) {
+    const decompressState: {
+      inputBuffer: Buffer;
+      outputBuffer: Buffer | null;
+    } = {
+      inputBuffer: compressedData,
+      outputBuffer: null,
+    };
+    lzo1x.decompress(decompressState);
+    return decompressState.outputBuffer as Buffer;
+  }
+
+  static decompressZLIB(compressedData: Buffer) {
+    return Buffer.from(pako.inflate(compressedData));;
   }
 
   compressedData(type: "lzo" | "zlib"): Buffer {
@@ -168,17 +205,9 @@ export default class MapParser extends EventEmitter {
     let uncompressedData: Buffer;
 
     if (type === "lzo") {
-      const decompressState: {
-        inputBuffer: Buffer;
-        outputBuffer: Buffer | null;
-      } = {
-        inputBuffer: compressedData,
-        outputBuffer: null,
-      };
-      lzo1x.decompress(decompressState);
-      uncompressedData = decompressState.outputBuffer as Buffer;
+      uncompressedData = GameBoxParser.decompressLZO(compressedData);
     } else if (type === "zlib") {
-      uncompressedData = Buffer.from(pako.inflate(compressedData));
+      uncompressedData = GameBoxParser.decompressZLIB(compressedData);
     } else {
       throw new Error("Invalid compression type");
     }
@@ -208,9 +237,9 @@ export default class MapParser extends EventEmitter {
     return { version, filePath, checksum, locatorUrl };
   }
 
-  list(f: () => any): any[] {
-    const count = this.int32();
-    const items: any[] = [];
+  list<T>(f: () => T, length?: number): T[] {
+    const count = length || this.int32();
+    const items: T[] = [];
     for (let i = 0; i < count; i++) {
       items.push(f());
     }
@@ -301,8 +330,8 @@ export default class MapParser extends EventEmitter {
     return {position, rotation, speed, velocity};
   }
 
-  bool() {
-    const value = this.uint32();
+  bool(asByte?: boolean) {
+    const value = asByte ? this.byte() : this.uint32();
     if (value > 1) throw new Error("Invalid boolean: " + value);
     return value !== 0;
   }
@@ -346,6 +375,45 @@ export default class MapParser extends EventEmitter {
     return [id, collection, author];
   }
 
+  iso4() {
+    return {
+      xx: this.float(),
+      xy: this.float(),
+      xz: this.float(),
+      yx: this.float(),
+      yy: this.float(),
+      yz: this.float(),
+      zx: this.float(),
+      zy: this.float(),
+      zz: this.float(),
+      tx: this.float(),
+      ty: this.float(),
+      tz: this.float(),
+    };
+  }
+
+  optimizedIntArray(length: number, determineFrom?: number): number[] {
+    if (length === 0) return [];
+
+    if (length < 0) throw new Error("Length is zero");
+
+    const arrayLength = (determineFrom || length) >>> 0;
+
+    if (arrayLength >= 65535) return this.list(() => this.int32(), length);
+    if (arrayLength >= 255) return this.list(() => this.uint16(), length);
+
+    return this.list(() => this.byte(), length);
+  }
+
+  optimizedInt(determineFrom: number): number {
+    determineFrom = determineFrom >>> 0;
+
+    if (determineFrom >= 65535) return this.int32();
+    if (determineFrom >= 255) return this.uint16();
+
+    return this.byte();
+  }
+
   skip(count: number) {
     this.parser.move(count);
   }
@@ -354,13 +422,15 @@ export default class MapParser extends EventEmitter {
     this.parser.seek(index);
   }
 
+  peekUint32() {
+    const n = this.uint32();
+    this.skip(-4);
+    return n;
+  }
+
   skipUntilFacade() {
-    while (true) {
-      const n = this.uint32();
-      if (n === 0xfacade01) {
-        this.skip(-4);
-        return;
-      }
+    while (this.peekUint32() !== 0xfacade01) {
+      this.skip(1);
     }
   }
 

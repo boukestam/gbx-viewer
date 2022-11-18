@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import "./App.css";
 import { Environment, Ghost, Sample } from "./parser/nodes";
-import MapParser from "./parser/parser";
-import { Chunk } from "./parser/types";
+import GameBoxParser from "./parser/parser";
+import { Node } from "./parser/types";
 import { Renderer } from "./Renderer";
 
 const name = "Stuartville Track";
@@ -25,62 +25,38 @@ async function loadGbx(url: string) {
 
   const buffer = await response.arrayBuffer();
 
-  const parser = new MapParser(Buffer.from(buffer));
-  const result = await parser.parse();
+  const parser = new GameBoxParser(Buffer.from(buffer));
+  const result = parser.parse();
 
   return result;
 }
 
-function getChunk<T>(chunks: Chunk[], id: number) {
-  return chunks.find((chunk) => chunk.id === id) as T | undefined;
-}
-
 async function loadMap(
   url: string
-): Promise<{ environment: Environment; ghost?: GhostSamples }> {
-  const result = await loadGbx(url);
+): Promise<{ map: Environment; ghost?: GhostSamples }> {
+  const map = await loadGbx(url);
 
-  console.log(result);
-
-  const environment = getChunk<Environment>(result.body, 0x0304301f);
-
-  if (!environment) throw new Error("No environment found in map file");
-
-  const ghost = getChunk<any>(
-    getChunk<any>(result.body, 50704397)?.raceValidateGhost.chunks || [],
-    0x03092000
-  );
-
-  return { environment, ghost: ghost && parseGhost(ghost) };
+  return {
+    map: map.body as unknown as Environment,
+    ghost:
+      map.body.raceValidateGhost &&
+      parseGhost(map.body.raceValidateGhost as Ghost),
+  };
 }
 
 function parseGhost(ghost: Ghost): GhostSamples {
   const samples: Sample[] = [];
-  for (const chunk of ghost.recordData.chunks) {
-    const sampleChunk = chunk as { samples?: Sample[] };
-    if (sampleChunk.samples) {
-      for (const sample of sampleChunk.samples) {
-        if (sample.transform) samples.push(sample);
-      }
-    }
+  for (const sample of ghost.recordData.samples) {
+    if (sample.transform) samples.push(sample);
   }
 
   return { ...ghost, samples: samples };
 }
 
 async function loadGhost(url: string): Promise<GhostSamples> {
-  const result = await loadGbx(url);
+  const replay = await loadGbx(url);
 
-  const ghost =
-    getChunk<Ghost>(result.body, 0x03092000) ||
-    getChunk<Ghost>(
-      getChunk<any>(result.body, 0x03093014).ghosts[0].chunks,
-      0x03092000
-    );
-
-  if (!ghost) throw new Error("No ghost found in map file");
-
-  return parseGhost(ghost);
+  return parseGhost(replay.body as unknown as Ghost);
 }
 
 function App() {
@@ -88,11 +64,23 @@ function App() {
   const [ghost, setGhost] = useState<GhostSamples | null>(null);
 
   useEffect(() => {
-    loadMap(mapUrl).then((result) => {
-      setMap(result.environment);
-      if (result.ghost) setGhost(result.ghost);
-      else loadGhost(replayUrl).then(setGhost);
-    });
+    loadMap(mapUrl)
+      .then((result) => {
+        setMap(result.map);
+        console.log(result.map);
+        if (result.ghost) setGhost(result.ghost);
+        else
+          loadGhost(replayUrl)
+            .then(setGhost)
+            .catch((e) => {
+              console.error("Error while parsing replay");
+              console.error(e);
+            });
+      })
+      .catch((e) => {
+        console.error("Error while parsing map");
+        console.error(e);
+      });
   }, []);
 
   return (

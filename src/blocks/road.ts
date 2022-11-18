@@ -15,303 +15,303 @@ const borderSideColor = hexToSrgb('#000000');
 const edgeColor = hexToSrgb('#1D2633');
 
 const roads: {[name: string]: () => CurveDescription} = {
-  RoadTechStraight: () => ({
+  Straight: () => ({
     curves: [straight()],
     size: new Vec3(1, 1, 1),
     offset: new Vec3(0, -1, 0)
   }),
 
-  RoadTechCurve1: () => ({
+  Curve1: () => ({
     curves: [curve()],
     size: new Vec3(1, 1, 1),
     offset: new Vec3(0, -1, 0)
   }),
-  RoadTechCurve2: () => ({
+  Curve2: () => ({
     curves: [curve()],
     size: new Vec3(2, 1, 2),
     offset: new Vec3(0, -1, 0)
   }),
-  RoadTechCurve3: () => ({
+  Curve3: () => ({
     curves: [curve()],
     size: new Vec3(3, 1, 3),
     offset: new Vec3(0, -1, 0)
   }),
-  RoadTechCurve4: () => ({
+  Curve4: () => ({
     curves: [curve()],
     size: new Vec3(4, 1, 4),
     offset: new Vec3(0, -1, 0)
   }),
-  RoadTechCurve5: () => ({
+  Curve5: () => ({
     curves: [curve()],
     size: new Vec3(5, 1, 5),
     offset: new Vec3(0, -1, 0)
   }),
 
-  RoadTechChicaneX2Left: () => ({
+  ChicaneX2Left: () => ({
     curves: [chicane(true)],
     size: new Vec3(2, 1, 2),
     offset: new Vec3(0, -1, 0)
   }),
-  RoadTechChicaneX3Left: () => ({
+  ChicaneX3Left: () => ({
     curves: [chicane(true)],
     size: new Vec3(2, 1, 3),
     offset: new Vec3(1, -1, -1)
   }),
-  RoadTechChicaneX2Right: () => ({
+  ChicaneX2Right: () => ({
     curves: [chicane(false)],
     size: new Vec3(2, 1, 2),
     offset: new Vec3(0, -1, 0)
   }),
-  RoadTechChicaneX3Right: () => ({
+  ChicaneX3Right: () => ({
     curves: [chicane(false)],
     size: new Vec3(2, 1, 3),
     offset: new Vec3(1, -1, -1)
   }),
 
-  RoadTechSlopeBase2: () => ({
+  SlopeBase2: () => ({
     curves: [slope()],
     size: new Vec3(1, 2, 1),
     offset: new Vec3(0, -2, 0)
   }),
-  RoadTechSlopeBase: () => ({
+  SlopeBase: () => ({
     curves: [slope()],
     size: new Vec3(1, 1, 1),
     offset: new Vec3(0, -1, 0)
   }),
-  RoadTechSlopeBase2x1: () => ({
+  SlopeBase2x1: () => ({
     curves: [slope()],
     size: new Vec3(1, 1, 2),
     offset: new Vec3(1, -1, -1)
   }),
 
-  RoadTechSlopeStraight: () => ({
+  SlopeStraight: () => ({
     curves: [straight(), raised(1)],
     size: new Vec3(1, 1, 1),
     offset: new Vec3(0, -1, 0)
   }),
-  RoadTechSlopeStart2x1: () => ({
+  SlopeStart2x1: () => ({
     curves: [straight(), convex(), raised(2)],
     size: new Vec3(1, 1, 2),
     offset: new Vec3(1, -1, -1)
   }),
-  RoadTechSlopeEnd2x1: () => ({
+  SlopeEnd2x1: () => ({
     curves: [straight(), concave(), raised(2)],
     size: new Vec3(1, 1, 2),
     offset: new Vec3(1, -1, -1)
   }),
 
-  RoadTechSlopeUTop: () => ({
+  SlopeUTop: () => ({
     curves: [straight(), concave(1)],
     size: new Vec3(1, 1, 1),
     offset: new Vec3(0, -1, 0)
   }),
-  RoadTechSlopeUTopX2: () => ({
+  SlopeUTopX2: () => ({
     curves: [straight(), concave()],
     size: new Vec3(1, 1, 2),
     offset: new Vec3(1, -1, -1)
   }),
-  RoadTechSlopeUBottom: () => ({
+  SlopeUBottom: () => ({
     curves: [straight(), convex(), up(1)],
     size: new Vec3(1, 1, 1),
     offset: new Vec3(0, -1, 0)
   }),
-  RoadTechSlopeUBottomX2: () => ({
+  SlopeUBottomX2: () => ({
     curves: [straight(), convex(), up(1)],
     size: new Vec3(1, 1, 2),
     offset: new Vec3(1, -1, -1)
   }),
-  RoadTechSlopeUBottomInGround: () => ({
+  SlopeUBottomInGround: () => ({
     curves: [straight(), convex(1)],
     size: new Vec3(1, 1, 1),
     offset: new Vec3(0, -1, 0)
   }),
-  RoadTechSlopeUBottomX2InGround: () => ({
+  SlopeUBottomX2InGround: () => ({
     curves: [straight(), convex(1.25)],
     size: new Vec3(1, 1, 2),
     offset: new Vec3(1, -1, -1)
   }),
 
-  RoadTechChicaneX2SlopeLeft: () => ({
+  ChicaneX2SlopeLeft: () => ({
     curves: [chicane(true), raised(2)],
     size: new Vec3(2, 1, 2),
     offset: new Vec3(0, -1, 0)
   }),
-  RoadTechChicaneX3SlopeLeft: () => ({
+  ChicaneX3SlopeLeft: () => ({
     curves: [chicane(true), raised(2)],
     size: new Vec3(2, 1, 3),
     offset: new Vec3(1, -1, -1)
   }),
-  RoadTechChicaneX2SlopeRight: () => ({
+  ChicaneX2SlopeRight: () => ({
     curves: [chicane(false), raised(2)],
     size: new Vec3(2, 1, 2),
     offset: new Vec3(0, -1, 0)
   }),
-  RoadTechChicaneX3SlopeRight: () => ({
+  ChicaneX3SlopeRight: () => ({
     curves: [chicane(false), raised(2)],
     size: new Vec3(2, 1, 3),
     offset: new Vec3(1, -1, -1)
   }),
 
-  RoadTechTiltStraight: () => ({
+  TiltStraight: () => ({
     curves: [straight(), tilt(true)],
     size: new Vec3(1, 1, 1),
     offset: new Vec3(0, -1, 0)
   }),
-  RoadTechTiltSwitchRight: () => ({
+  TiltSwitchRight: () => ({
     curves: [slope(false, (r, t) => (r + 1) * 0.5), slope(true, (r, t) => (r - 1) * -0.5)],
     size: new Vec3(1, 1, 1),
     offset: new Vec3(0, -1, 0)
   }),
-  RoadTechTiltSwitchLeft: () => ({
+  TiltSwitchLeft: () => ({
     curves: [slope(true, (r, t) => (r + 1) * 0.5), slope(false, (r, t) => (r - 1) * -0.5)],
     size: new Vec3(1, 1, 1),
     offset: new Vec3(0, -1, 0)
   }),
 
-  RoadTechChicaneX2TiltLeft: () => ({
+  ChicaneX2TiltLeft: () => ({
     curves: [chicane(true), raised(-2), tilt(true)],
     size: new Vec3(2, 1, 2),
     offset: new Vec3(0, -1, 0)
   }),
-  RoadTechChicaneX3TiltLeft: () => ({
+  ChicaneX3TiltLeft: () => ({
     curves: [chicane(true), raised(-2), tilt(true)],
     size: new Vec3(2, 1, 3),
     offset: new Vec3(1, -1, -1)
   }),
-  RoadTechChicaneX2TiltRight: () => ({
+  ChicaneX2TiltRight: () => ({
     curves: [chicane(false), raised(2), tilt(true)],
     size: new Vec3(2, 1, 2),
     offset: new Vec3(0, -1, 0)
   }),
-  RoadTechChicaneX3TiltRight: () => ({
+  ChicaneX3TiltRight: () => ({
     curves: [chicane(false), raised(2), tilt(true)],
     size: new Vec3(2, 1, 3),
     offset: new Vec3(1, -1, -1)
   }),
 
-  RoadTechTiltCurve1: () => ({
+  TiltCurve1: () => ({
     curves: [curve(), tilt()],
     size: new Vec3(1, 1, 1),
     offset: new Vec3(0, -1, 0)
   }),
-  RoadTechTiltCurve2: () => ({
+  TiltCurve2: () => ({
     curves: [curve(), tilt()],
     size: new Vec3(2, 1, 2),
     offset: new Vec3(0, -1, 0)
   }),
-  RoadTechTiltCurve3: () => ({
+  TiltCurve3: () => ({
     curves: [curve(), tilt()],
     size: new Vec3(3, 1, 3),
     offset: new Vec3(0, -1, 0)
   }),
-  RoadTechTiltCurve4: () => ({
+  TiltCurve4: () => ({
     curves: [curve(), tilt()],
     size: new Vec3(4, 1, 4),
     offset: new Vec3(0, -1, 0)
   }),
 
-  RoadTechTiltCurve1DownLeft: () => ({
+  TiltCurve1DownLeft: () => ({
     curves: [curve(), tilt(false, "TopLeftUp")],
     size: new Vec3(1, 1, 1),
     offset: new Vec3(0, -1, 0)
   }),
-  RoadTechTiltCurve1DownRight: () => ({
+  TiltCurve1DownRight: () => ({
     curves: [curve(), tilt(false, "BottomLeftUp")],
     size: new Vec3(1, 1, 1),
     offset: new Vec3(0, -1, 0)
   }),
-  RoadTechTiltCurve1UpLeft: () => ({
+  TiltCurve1UpLeft: () => ({
     curves: [curve(), tilt(false, "BottomLeftDown")],
     size: new Vec3(1, 1, 1),
     offset: new Vec3(0, -1, 0)
   }),
-  RoadTechTiltCurve1UpRight: () => ({
+  TiltCurve1UpRight: () => ({
     curves: [curve(), tilt(false, "TopLeftDown")],
     size: new Vec3(1, 1, 1),
     offset: new Vec3(0, -1, 0)
   }),
 
-  RoadTechTiltCurve2DownLeft: () => ({
+  TiltCurve2DownLeft: () => ({
     curves: [curve(), tilt(false, "TopLeftUp"), raised(1)],
     size: new Vec3(2, 1, 2),
     offset: new Vec3(0, -1, 0)
   }),
-  RoadTechTiltCurve2DownRight: () => ({
+  TiltCurve2DownRight: () => ({
     curves: [curve(), tilt(false, "BottomLeftUp"), raised(1)],
     size: new Vec3(2, 1, 2),
     offset: new Vec3(0, -1, 0)
   }),
-  RoadTechTiltCurve2UpLeft: () => ({
+  TiltCurve2UpLeft: () => ({
     curves: [curve(), tilt(false, "BottomLeftDown"), raised(2)],
     size: new Vec3(2, 1, 2),
     offset: new Vec3(0, -1, 0)
   }),
-  RoadTechTiltCurve2UpRight: () => ({
+  TiltCurve2UpRight: () => ({
     curves: [curve(), tilt(false, "TopLeftDown"), raised(-2)],
     size: new Vec3(2, 1, 2),
     offset: new Vec3(0, -1, 0)
   }),
 
-  RoadTechTiltTransition1UpRight: () => ({
+  TiltTransition1UpRight: () => ({
     curves: [flat((r, t) => (r + 1) * 0.5), slope(true, (r, t) => (r - 1) * -0.5)],
     size: new Vec3(1, 1, 1),
     offset: new Vec3(0, -1, 0)
   }),
-  RoadTechTiltTransition2UpRight: () => ({
+  TiltTransition2UpRight: () => ({
     curves: [flat((r, t) => (r + 1) * 0.5), slope(true, (r, t) => (r - 1) * -0.5)],
     size: new Vec3(1, 1, 2),
     offset: new Vec3(1, -1, -1)
   }),
-  RoadTechTiltTransition2UpRightCurveIn: () => ({
+  TiltTransition2UpRightCurveIn: () => ({
     curves: [curve(), tilt(false, "BottomLeftUp")],
     size: new Vec3(2, 1, 2),
     offset: new Vec3(0, -1, 0)
   }),
 
-  RoadTechTiltTransition1UpLeft: () => ({
+  TiltTransition1UpLeft: () => ({
     curves: [slope(true, (r, t) => (r + 1) * 0.5), flat((r, t) => (r - 1) * -0.5)],
     size: new Vec3(1, 1, 1),
     offset: new Vec3(0, -1, 0)
   }),
-  RoadTechTiltTransition2UpLeft: () => ({
+  TiltTransition2UpLeft: () => ({
     curves: [slope(true, (r, t) => (r + 1) * 0.5), flat((r, t) => (r - 1) * -0.5)],
     size: new Vec3(1, 1, 2),
     offset: new Vec3(1, -1, -1)
   }),
-  RoadTechTiltTransition2UpLeftCurveIn: () => ({
+  TiltTransition2UpLeftCurveIn: () => ({
     curves: [curve(), tilt(false, "TopLeftUp")],
     size: new Vec3(2, 1, 2),
     offset: new Vec3(0, -1, 0),
     rotation: new Vec3(0, Math.PI * 0.5, 0)
   }),
 
-  RoadTechTiltTransition1DownRight: () => ({
+  TiltTransition1DownRight: () => ({
     curves: [slope(false, (r, t) => (r + 1) * 0.5), flat((r, t) => (r - 1) * -0.5), up(1, (r, t) => (r - 1) * -0.5)],
     size: new Vec3(1, 1, 1),
     offset: new Vec3(0, -1, 0)
   }),
-  RoadTechTiltTransition2DownRight: () => ({
+  TiltTransition2DownRight: () => ({
     curves: [slope(false, (r, t) => (r + 1) * 0.5), flat((r, t) => (r - 1) * -0.5), up(1, (r, t) => (r - 1) * -0.5)],
     size: new Vec3(1, 1, 2),
     offset: new Vec3(1, -1, -1)
   }),
-  RoadTechTiltTransition2DownRightCurveIn: () => ({
+  TiltTransition2DownRightCurveIn: () => ({
     curves: [curve(), tilt(true, "BottomLeftDown")],
     size: new Vec3(2, 1, 2),
     offset: new Vec3(0, -1, 0)
   }),
 
-  RoadTechTiltTransition1DownLeft: () => ({
+  TiltTransition1DownLeft: () => ({
     curves: [flat((r, t) => (r + 1) * 0.5), slope(false, (r, t) => (r - 1) * -0.5), up(1, (r, t) => (r + 1) * 0.5)],
     size: new Vec3(1, 1, 1),
     offset: new Vec3(0, -1, 0)
   }),
-  RoadTechTiltTransition2DownLeft: () => ({
+  TiltTransition2DownLeft: () => ({
     curves: [flat((r, t) => (r + 1) * 0.5), slope(false, (r, t) => (r - 1) * -0.5), up(1, (r, t) => (r + 1) * 0.5)],
     size: new Vec3(1, 1, 2),
     offset: new Vec3(1, -1, -1)
   }),
-  RoadTechTiltTransition2DownLeftCurveIn: () => ({
+  TiltTransition2DownLeftCurveIn: () => ({
     curves: [curve(), tilt(true, "TopLeftDown")],
     size: new Vec3(2, 1, 2),
     offset: new Vec3(0, -1, 0),
@@ -360,6 +360,8 @@ function getRoadSurface(name: string): Surface {
 }
 
 export function getRoadCurve(name: string): CurveDescription {
+  name = name.replace(/Road(Tech|Dirt|Ice)/, "");
+
   if (!(name in roads)) return {
     curves: [straight()],
     size: new Vec3(1, 1, 1),

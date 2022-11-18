@@ -1,6 +1,7 @@
-import MapParser from "./parser";
+import GameBoxParser from "./parser";
+import { Node } from "./types";
 
-export function parseHeader(p: MapParser) {
+export function parseHeader(p: GameBoxParser): Node {
   p.skip(3); // skip GBX
 
   const version = p.uint16();
@@ -41,10 +42,10 @@ export function parseHeader(p: MapParser) {
 
   const numNodes = p.uint32();
 
-  return { version, format, classId, numNodes, chunks };
+  return { classId, chunks };
 }
 
-function parseHeaderChunk(p: MapParser, id: string, size: number) {
+function parseHeaderChunk(p: GameBoxParser, id: string, size: number) {
   switch (id) {
     case "50606082": // 0x03043002
       return _parseC1(p, size);
@@ -73,7 +74,7 @@ function parseHeaderChunk(p: MapParser, id: string, size: number) {
  * @returns {Promise}
  * @private
  */
-function _parseC1(p: MapParser, size: number) {
+function _parseC1(p: GameBoxParser, size: number) {
   let version = p.byte();
 
   p.skip(4);
@@ -121,7 +122,7 @@ function _parseC1(p: MapParser, size: number) {
  * @returns {Promise}
  * @private
  */
-function _parseC2(p: MapParser, size: number) {
+function _parseC2(p: GameBoxParser, size: number) {
   let version = p.byte();
 
   const uid = p.lookBackString();
@@ -169,7 +170,7 @@ function _parseC2(p: MapParser, size: number) {
  * @returns {Promise}
  * @private
  */
-function _parseC3(p: MapParser, size: number) {
+function _parseC3(p: GameBoxParser, size: number) {
   let version = p.byte();
 
   p.skip(size - 1);
@@ -185,7 +186,7 @@ function _parseC3(p: MapParser, size: number) {
  * @returns {Promise}
  * @private
  */
-function _parseC4(p: MapParser, size: number) {
+function _parseC4(p: GameBoxParser, size: number) {
   const xml = p.string();
   return { xml };
 }
@@ -198,7 +199,7 @@ function _parseC4(p: MapParser, size: number) {
  * @returns {Promise}
  * @private
  */
-function _parseC5(p: MapParser, size: number) {
+function _parseC5(p: GameBoxParser, size: number) {
   let thumb;
   let comment = "";
 
@@ -233,7 +234,7 @@ function _parseC5(p: MapParser, size: number) {
  * @returns {Promise}
  * @private
  */
-function _parseC6(p: MapParser, size: number) {
+function _parseC6(p: GameBoxParser, size: number) {
   let version = p.uint32();
 
   const author = {

@@ -1,7 +1,7 @@
 import { Block, Environment } from "./nodes";
-import MapParser from "./parser";
+import GameBoxParser from "./parser";
 
-export function parseBlocks(p: MapParser, chunkId: number): Environment {
+export function parseBlocks(p: GameBoxParser, chunkId: number): Environment {
   const [trackUID, environment, mapAuthor] = p.meta();
 
   const trackName = p.string();

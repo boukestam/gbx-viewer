@@ -1,4 +1,4 @@
-import MapParser from "./parser";
+import GameBoxParser from "./parser";
 
 export interface Folder {
   name: string;
@@ -19,7 +19,7 @@ export interface ReferenceTable {
   externalNodes: ExternalNode[];
 }
 
-function parseFolder(p: MapParser): Folder {
+function parseFolder(p: GameBoxParser): Folder {
   const name = p.string();
   const numSubFolders = p.uint32();
 
@@ -33,7 +33,7 @@ function parseFolder(p: MapParser): Folder {
   return { name, subFolders };
 }
 
-export function parseRefTable(p: MapParser): ReferenceTable | null {
+export function parseRefTable(p: GameBoxParser): ReferenceTable | null {
   const numExternalNodes = p.uint32();
   if (numExternalNodes > 0) {
     const ancestorLevel = p.uint32();

@@ -115,6 +115,6 @@ export interface Chunk {
 }
 
 export interface Node {
-  id: number;
-  chunks: Chunk[];
+  [key: string]: any,
+  classId: number;
 }

@@ -27,88 +27,88 @@ const edgeColor = hexToSrgb("#444444");
 const bottomColor = new Color(0, 0, 0);
 
 const platforms: { [name: string]: () => CurveDescription } = {
-  PlatformTechBase: () => ({
+ Base: () => ({
     curves: [straight()],
     size: new Vec3(1, 1, 1),
     offset: new Vec3(0, -1, 0),
   }),
 
-  PlatformTechSlope2Base: () => ({
+ Slope2Base: () => ({
     curves: [slope()],
     size: new Vec3(1, 2, 1),
     offset: new Vec3(0, -2, 0),
   }),
-  PlatformTechSlopeBase: () => ({
+ SlopeBase: () => ({
     curves: [slope()],
     size: new Vec3(1, 1, 1),
     offset: new Vec3(0, -1, 0),
   }),
 
-  PlatformTechSlope2Straight: () => ({
+ Slope2Straight: () => ({
     curves: [straight(), raised(2)],
     size: new Vec3(1, 1, 1),
     offset: new Vec3(0, -1, 0),
   }),
-  PlatformTechSlope2Start: () => ({
+ Slope2Start: () => ({
     curves: [straight(), convex(), raised(2)],
     size: new Vec3(1, 1, 1),
     offset: new Vec3(0, -1, 0),
   }),
-  PlatformTechSlope2End: () => ({
+ Slope2End: () => ({
     curves: [straight(), concave(), raised(2)],
     size: new Vec3(1, 1, 1),
     offset: new Vec3(0, -1, 0),
   }),
 
-  PlatformTechSlope2UTop: () => ({
+ Slope2UTop: () => ({
     curves: [straight(), concave()],
     size: new Vec3(1, 1, 1),
     offset: new Vec3(0, -1, 0),
   }),
-  PlatformTechSlope2UBottom: () => ({
+ Slope2UBottom: () => ({
     curves: [straight(), convex(), up(2)],
     size: new Vec3(1, 1, 1),
     offset: new Vec3(0, -1, 0),
   }),
-  PlatformTechSlope2UBottomInGround: () => ({
+ Slope2UBottomInGround: () => ({
     curves: [straight(), convex()],
     size: new Vec3(1, 1, 1),
     offset: new Vec3(0, -1, 0),
   }),
 
-  PlatformTechSlope2Curve1In: () => ({
+ Slope2Curve1In: () => ({
     curves: [curve(), tilt()],
     size: new Vec3(1, 2, 1),
     offset: new Vec3(0, -2, 0),
   }),
-  PlatformTechSlope2Curve2In: () => ({
+ Slope2Curve2In: () => ({
     curves: [curve(), tilt()],
     size: new Vec3(2, 2, 2),
     offset: new Vec3(0, -2, 0),
   }),
-  PlatformTechSlope2Curve3In: () => ({
+ Slope2Curve3In: () => ({
     curves: [curve(), tilt()],
     size: new Vec3(3, 2, 3),
     offset: new Vec3(0, -2, 0),
   }),
 
-  PlatformTechSlope2Curve1Out: () => ({
+ Slope2Curve1Out: () => ({
     curves: [curve(), tilt(true)],
     size: new Vec3(1, 2, 1),
     offset: new Vec3(0, -2, 0),
   }),
-  PlatformTechSlope2Curve2Out: () => ({
+ Slope2Curve2Out: () => ({
     curves: [curve(), tilt(true)],
     size: new Vec3(2, 2, 2),
     offset: new Vec3(0, -2, 0),
   }),
-  PlatformTechSlope2Curve3Out: () => ({
+ Slope2Curve3Out: () => ({
     curves: [curve(), tilt(true)],
     size: new Vec3(3, 2, 3),
     offset: new Vec3(0, -2, 0),
   }),
 
-  PlatformTechTiltTransition1UpLeft: () => ({
+ TiltTransition1UpLeft: () => ({
     curves: [
       flat((r, t) => (r + 1) * 0.5),
       slope(false, (r, t) => (r - 1) * -0.5),
@@ -116,7 +116,7 @@ const platforms: { [name: string]: () => CurveDescription } = {
     size: new Vec3(1, 2, 1),
     offset: new Vec3(0, -2, 0),
   }),
-  PlatformTechTiltTransition2UpLeft: () => ({
+ TiltTransition2UpLeft: () => ({
     curves: [
       flat((r, t) => (r + 1) * 0.5),
       slope(false, (r, t) => (r - 1) * -0.5),
@@ -125,7 +125,7 @@ const platforms: { [name: string]: () => CurveDescription } = {
     offset: new Vec3(1, -2, 0),
   }),
 
-  PlatformTechTiltTransition1UpRight: () => ({
+ TiltTransition1UpRight: () => ({
     curves: [
       slope(false, (r, t) => (r + 1) * 0.5),
       flat((r, t) => (r - 1) * -0.5),
@@ -133,7 +133,7 @@ const platforms: { [name: string]: () => CurveDescription } = {
     size: new Vec3(1, 2, 1),
     offset: new Vec3(0, -2, 0),
   }),
-  PlatformTechTiltTransition2UpRight: () => ({
+ TiltTransition2UpRight: () => ({
     curves: [
       slope(false, (r, t) => (r + 1) * 0.5),
       flat((r, t) => (r - 1) * -0.5),
@@ -142,7 +142,7 @@ const platforms: { [name: string]: () => CurveDescription } = {
     offset: new Vec3(1, -2, 0),
   }),
 
-  PlatformTechTiltTransition1DownLeft: () => ({
+ TiltTransition1DownLeft: () => ({
     curves: [
       flat((r, t) => (r + 1) * 0.5),
       slope(false, (r, t) => (r - 1) * -0.5),
@@ -151,7 +151,7 @@ const platforms: { [name: string]: () => CurveDescription } = {
     size: new Vec3(1, 2, 1),
     offset: new Vec3(0, -2, 0),
   }),
-  PlatformTechTiltTransition2DownLeft: () => ({
+ TiltTransition2DownLeft: () => ({
     curves: [
       flat((r, t) => (r + 1) * 0.5),
       slope(false, (r, t) => (r - 1) * -0.5),
@@ -161,7 +161,7 @@ const platforms: { [name: string]: () => CurveDescription } = {
     offset: new Vec3(1, -2, 0),
   }),
 
-  PlatformTechTiltTransition1DownRight: () => ({
+ TiltTransition1DownRight: () => ({
     curves: [
       slope(false, (r, t) => (r + 1) * 0.5),
       flat((r, t) => (r - 1) * -0.5),
@@ -170,7 +170,7 @@ const platforms: { [name: string]: () => CurveDescription } = {
     size: new Vec3(1, 2, 1),
     offset: new Vec3(0, -2, 0),
   }),
-  PlatformTechTiltTransition2DownRight: () => ({
+ TiltTransition2DownRight: () => ({
     curves: [
       slope(false, (r, t) => (r + 1) * 0.5),
       flat((r, t) => (r - 1) * -0.5),
@@ -180,213 +180,213 @@ const platforms: { [name: string]: () => CurveDescription } = {
     offset: new Vec3(1, -2, 0),
   }),
 
-  PlatformTechLoopStart: () => ({
+ LoopStart: () => ({
     curves: [loop()],
     size: new Vec3(1, 4, 1),
     offset: new Vec3(0, -4, 0),
   }),
-  PlatformTechSlope2LoopStart: () => ({
+ Slope2LoopStart: () => ({
     curves: [loop()],
     size: new Vec3(1, 4, 1),
     offset: new Vec3(0, -4, 0),
   }),
 
-  PlatformTechLoopStartCurve1In: () => ({
+ LoopStartCurve1In: () => ({
     curves: [curve(), pipe()],
     size: new Vec3(1, 4, 1),
     offset: new Vec3(0, -4, 0),
   }),
-  PlatformTechLoopStartCurve2In: () => ({
+ LoopStartCurve2In: () => ({
     curves: [curve(), pipe()],
     size: new Vec3(2, 4, 2),
     offset: new Vec3(0, -4, 0),
   }),
-  PlatformTechLoopStartCurve3In: () => ({
+ LoopStartCurve3In: () => ({
     curves: [curve(), pipe()],
     size: new Vec3(3, 4, 3),
     offset: new Vec3(0, -4, 0),
   }),
 
-  PlatformTechLoopStartCurve0Out: () => ({
+ LoopStartCurve0Out: () => ({
     curves: [curve(), pipe(true)],
     size: new Vec3(1, 4, 1),
     offset: new Vec3(0, -4, 0),
   }),
-  PlatformTechLoopStartCurve1Out: () => ({
+ LoopStartCurve1Out: () => ({
     curves: [curve(), pipe(true)],
     size: new Vec3(2, 4, 2),
     offset: new Vec3(0, -4, 0),
   }),
-  PlatformTechLoopStartCurve2Out: () => ({
+ LoopStartCurve2Out: () => ({
     curves: [curve(), pipe(true)],
     size: new Vec3(3, 4, 3),
     offset: new Vec3(0, -4, 0),
   }),
-  PlatformTechLoopStartCurve3Out: () => ({
+ LoopStartCurve3Out: () => ({
     curves: [curve(), pipe(true)],
     size: new Vec3(4, 4, 4),
     offset: new Vec3(0, -4, 0),
   }),
 
-  PlatformTechLoopOutStart: () => ({
+ LoopOutStart: () => ({
     curves: [loop(true)],
     size: new Vec3(1, 4, 1),
     offset: new Vec3(0, -4, 0),
   }),
 
-  PlatformTechLoopOutStartCurve1: () => ({
+ LoopOutStartCurve1: () => ({
     curves: [curve(), pipe(true, true)],
     size: new Vec3(1, 4, 1),
     offset: new Vec3(0, -4, 0),
   }),
-  PlatformTechLoopOutStartCurve2: () => ({
+ LoopOutStartCurve2: () => ({
     curves: [curve(), pipe(true, true)],
     size: new Vec3(2, 4, 2),
     offset: new Vec3(0, -4, 0),
   }),
-  PlatformTechLoopOutStartCurve3: () => ({
+ LoopOutStartCurve3: () => ({
     curves: [curve(), pipe(true, true)],
     size: new Vec3(3, 4, 3),
     offset: new Vec3(0, -4, 0),
   }),
 
-  PlatformTechLoopOutStartCurve1In: () => ({
+ LoopOutStartCurve1In: () => ({
     curves: [curve(), pipe(false, true)],
     size: new Vec3(2, 4, 2),
     offset: new Vec3(0, -4, -2),
   }),
-  PlatformTechLoopOutStartCurve2In: () => ({
+ LoopOutStartCurve2In: () => ({
     curves: [curve(), pipe(false, true)],
     size: new Vec3(3, 4, 3),
     offset: new Vec3(0, -4, -2),
   }),
-  PlatformTechLoopOutStartCurve3In: () => ({
+ LoopOutStartCurve3In: () => ({
     curves: [curve(), pipe(false, true)],
     size: new Vec3(4, 4, 4),
     offset: new Vec3(0, -4, -2),
   }),
 
-  PlatformTechLoopEnd: () => ({
+ LoopEnd: () => ({
     curves: [loop()],
     size: new Vec3(1, 4, 1),
     offset: new Vec3(0, 4, 0),
     rotation: new Vec3(Math.PI, Math.PI, 0)
   }),
 
-  PlatformTechLoopEndCurve1In: () => ({
+ LoopEndCurve1In: () => ({
     curves: [curve(), pipe()],
     size: new Vec3(1, 4, 1),
     offset: new Vec3(0, 4, 0),
     rotation: new Vec3(Math.PI, Math.PI * -0.5, 0)
   }),
-  PlatformTechLoopEndCurve2In: () => ({
+ LoopEndCurve2In: () => ({
     curves: [curve(), pipe()],
     size: new Vec3(2, 4, 2),
     offset: new Vec3(0, 4, 0),
     rotation: new Vec3(Math.PI, Math.PI * -0.5, 0)
   }),
-  PlatformTechLoopEndCurve3In: () => ({
+ LoopEndCurve3In: () => ({
     curves: [curve(), pipe()],
     size: new Vec3(3, 4, 3),
     offset: new Vec3(0, 4, 0),
     rotation: new Vec3(Math.PI, Math.PI * -0.5, 0)
   }),
 
-  PlatformTechLoopEndCurve0Out: () => ({
+ LoopEndCurve0Out: () => ({
     curves: [curve(), pipe(true)],
     size: new Vec3(1, 4, 1),
     offset: new Vec3(0, 4, 0),
     rotation: new Vec3(Math.PI, Math.PI * 0.5, 0)
   }),
-  PlatformTechLoopEndCurve1Out: () => ({
+ LoopEndCurve1Out: () => ({
     curves: [curve(), pipe(true)],
     size: new Vec3(2, 4, 2),
     offset: new Vec3(0, 4, 0),
     rotation: new Vec3(Math.PI, Math.PI * 0.5, 0)
   }),
-  PlatformTechLoopEndCurve2Out: () => ({
+ LoopEndCurve2Out: () => ({
     curves: [curve(), pipe(true)],
     size: new Vec3(3, 4, 3),
     offset: new Vec3(0, 4, 0),
     rotation: new Vec3(Math.PI, Math.PI * 0.5, 0)
   }),
-  PlatformTechLoopEndCurve3Out: () => ({
+ LoopEndCurve3Out: () => ({
     curves: [curve(), pipe(true)],
     size: new Vec3(4, 4, 4),
     offset: new Vec3(0, 4, 0),
     rotation: new Vec3(Math.PI, Math.PI * 0.5, 0)
   }),
 
-  PlatformTechWallCurve3x4: () => ({
+ WallCurve3x4: () => ({
     curves: [loop()],
     size: new Vec3(1, 12, 3),
     offset: new Vec3(2, -8, -3),
     rotation: new Vec3(0, Math.PI * 0.5, Math.PI * -0.5)
   }),
-  PlatformTechWallCurve2x4: () => ({
+ WallCurve2x4: () => ({
     curves: [loop()],
     size: new Vec3(1, 8, 2),
     offset: new Vec3(1, -4, -2),
     rotation: new Vec3(0, Math.PI * 0.5, Math.PI * -0.5)
   }),
-  PlatformTechWallCurve1x4: () => ({
+ WallCurve1x4: () => ({
     curves: [loop()],
     size: new Vec3(1, 4, 1),
     offset: new Vec3(0, 0, -1),
     rotation: new Vec3(0, Math.PI * 0.5, Math.PI * -0.5)
   }),
 
-  PlatformTechWallCurve3: () => ({
+ WallCurve3: () => ({
     curves: [loop()],
     size: new Vec3(0.25, 12, 3),
     offset: new Vec3(3, -11, -3),
     rotation: new Vec3(0, Math.PI * 0.5, Math.PI * -0.5)
   }),
-  PlatformTechWallCurve2: () => ({
+ WallCurve2: () => ({
     curves: [loop()],
     size: new Vec3(0.25, 8, 2),
     offset: new Vec3(2, -7, -2),
     rotation: new Vec3(0, Math.PI * 0.5, Math.PI * -0.5)
   }),
-  PlatformTechWallCurve1: () => ({
+ WallCurve1: () => ({
     curves: [loop()],
     size: new Vec3(0.25, 4, 1),
     offset: new Vec3(1, -3, -1),
     rotation: new Vec3(0, Math.PI * 0.5, Math.PI * -0.5)
   }),
 
-  PlatformTechWallOutCurve3x4: () => ({
+ WallOutCurve3x4: () => ({
     curves: [loop(true)],
     size: new Vec3(1, 12, 3),
     offset: new Vec3(-1, -8, 0),
     rotation: new Vec3(0, 0, Math.PI * 0.5)
   }),
-  PlatformTechWallOutCurve2x4: () => ({
+ WallOutCurve2x4: () => ({
     curves: [loop(true)],
     size: new Vec3(1, 8, 2),
     offset: new Vec3(-1, -4, 0),
     rotation: new Vec3(0, 0, Math.PI * 0.5)
   }),
-  PlatformTechWallOutCurve1x4: () => ({
+ WallOutCurve1x4: () => ({
     curves: [loop(true)],
     size: new Vec3(1, 4, 1),
     offset: new Vec3(-1, 0, 0),
     rotation: new Vec3(0, 0, Math.PI * 0.5)
   }),
 
-  PlatformTechWallOutCurve3: () => ({
+ WallOutCurve3: () => ({
     curves: [loop(true)],
     size: new Vec3(0.25, 12, 3),
     offset: new Vec3(-1, -11, 0),
     rotation: new Vec3(0, 0, Math.PI * 0.5)
   }),
-  PlatformTechWallOutCurve2: () => ({
+ WallOutCurve2: () => ({
     curves: [loop(true)],
     size: new Vec3(0.25, 8, 2),
     offset: new Vec3(-1, -7, 0),
     rotation: new Vec3(0, 0, Math.PI * 0.5)
   }),
-  PlatformTechWallOutCurve1: () => ({
+ WallOutCurve1: () => ({
     curves: [loop(true)],
     size: new Vec3(0.25, 4, 1),
     offset: new Vec3(-1, -3, 0),
@@ -414,6 +414,8 @@ function getPlatformSurface(name: string): Surface {
 }
 
 export function getPlatformCurve(name: string): CurveDescription {
+  name = name.replace(/Platform(Tech|Dirt|Ice|Platform)/, "");
+
   if (!(name in platforms))
     return {
       curves: [straight()],
