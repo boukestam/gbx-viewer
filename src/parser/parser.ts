@@ -1,60 +1,14 @@
 import BufferReader from "buffer-reader";
-import { EventEmitter } from "events";
 
 import { CollectionIds } from "./collection_ids";
 import { parseRefTable, ReferenceTable } from "./table";
-import { parseChunk } from "./chunk";
+import { getChunkInfo, parseChunk } from "./chunk";
+import { FileRef, Vec3, Vec4, Transform, Vec2, Color, Quaternion, Node } from "./types";
 import { parseHeader } from "./header";
 
 import pako from "pako";
-import { FileRef, Vec3, Vec4, Transform, Vec2, Color, Quaternion, Node } from "./types";
 
 const lzo1x = require("./lzo1x.js");
-
-const skippableChunks = [
-  0x2e009001,
-
-  0x03029002,
-
-  0x03043034, 0x03043036, 0x03043038, 0x0304303e, 0x03043044, 0x0304304f,
-  0x03043055, 0x03043057, 0x03043058, 0x03043059, 0x0304305a, 
-  0x0304305b, 0x0304305c, 0x0304305d,
-  0x0304305e, 0x0304305f, 0x03043060, 0x03043061, 0x03043064, 0x03043067, 
-
-  0x0303f007,
-
-  0x0305b00a, 0x0305b00e,
-
-  0x03092013, 0x0309201a, 0x0309201b, 0x03092022, 0x03092023, 0x03092024, 
-  0x03092026, 0x03092027, 0x03092028, 0x03092029, 0x0309202A, 0x0309202B,
-  0x0309202C, 0x0309202D,
-
-  0x0309301A, 0x0309301B, 0x0309301C, 0x0309301D, 0x0309301E, 0x0309301F, 
-  0x03093020, 0x03093021, 0x03093022, 0x03093023, 0x03093025, 0x03093026,
-  0x03093027, 0x03093028,
-
-  0x03101004, 0x03101005,
-
-  0x0310d00b, 0x0310d00c, 0x0310d010, 0x0310d011,
-
-  0x40000006,
-
-  0x09003004
-];
-
-const parsableSkippableChunks = [
-  0x03043018, 0x03043019, 0x0304301c, 0x03043029, 
-  0x0304303d, 0x03043040, 0x03043042, 0x03043043,
-  0x03043048, 0x0304304b, 0x03043050, 0x03043051,
-  0x03043052, 0x03043053, 0x03043054, 0x03043056, 
-  0x03043062, 0x03043063,
-  0x03043065, 0x03043066, 0x03043068, 0x03043069,
-
-  0x03092000, 0x03092005, 0x03092008, 0x03092009, 0x0309200a, 0x0309200b,
-  0x03092013, 0x03092014, 0x03092017, 0x0309201d, 0x03092025,
-
-  0x03093018
-];
 
 export default class GameBoxParser {
   buffer: Buffer;
@@ -103,20 +57,6 @@ export default class GameBoxParser {
     return node as Node;
   }
 
-  getChunkInfo(chunkId: number) {
-    const info = {
-      skippable: false,
-      parsableSkippable: false,
-    };
-
-    if (skippableChunks.indexOf(chunkId) !== -1) info.skippable = true;
-
-    if (parsableSkippableChunks.indexOf(chunkId) !== -1)
-      info.parsableSkippable = true;
-
-    return info;
-  }
-
   parseNode(classId?: number): Node | null {
     if (!classId) classId = this.uint32();
 
@@ -129,16 +69,14 @@ export default class GameBoxParser {
     while (true) {
       const chunkId = this.uint32();
       if (chunkId === 0xfacade01) {
-        // no more chunks
         break;
       }
 
-      const chunkFlags = this.getChunkInfo(chunkId);
+      const chunkFlags = getChunkInfo(chunkId);
 
       if (chunkFlags.skippable) {
         const skip = this.uint32();
         if (skip !== 0x534b4950) {
-          // "SKIP"
           break;
         }
 
@@ -238,7 +176,7 @@ export default class GameBoxParser {
   }
 
   list<T>(f: () => T, length?: number): T[] {
-    const count = length || this.int32();
+    const count = typeof length === 'undefined' ? this.int32() : length;
     const items: T[] = [];
     for (let i = 0; i < count; i++) {
       items.push(f());
@@ -440,7 +378,6 @@ export default class GameBoxParser {
   }
 
   lookBackString(cannotBeCollection: boolean = false): string {
-    // Lookback Baguette
     if (!this.lookbackSeen) {
       this.skip(4);
       this.lookbackSeen = true;

@@ -1,7 +1,7 @@
 import GameBoxParser from "../parser";
 import { Node, Vec2, Vec3 } from "../types";
 
-enum ELayerType {
+export enum ELayerType {
   Geometry,
   Smooth,
   Translation,
@@ -187,7 +187,7 @@ function parseCrystal(p: GameBoxParser, materials: any[] | null) {
 function parseGeometryLayer(p: GameBoxParser, node: Node, version: number, materials: any[] | null) {
   const crystal = parseCrystal(p, materials);
 
-  p.skip(4);
+  p.list(() => p.int32());
 
   let collidable = true;
   let visible = true;
@@ -315,7 +315,6 @@ export function parseChunk(p: GameBoxParser, chunkId: number, node: Node): any {
     return {materials};
   } else if (chunkId === 0x09003005) {
     const version = p.int32();
-    const layerCount = p.int32();
 
     const layers = p.list(() => {
       const type = p.int32();
@@ -342,5 +341,28 @@ export function parseChunk(p: GameBoxParser, chunkId: number, node: Node): any {
     });
 
     return {layers};
+  } else if (chunkId === 0x09003006) {
+    const version = p.int32();
+
+    if (version === 0) {
+      p.list(() => p.vec2());
+    }
+
+    if (version >= 1) {
+      p.list(() => p.uint32());
+
+      if (version >= 2) {
+        p.optimizedIntArray(p.int32());
+      }
+    }
+
+    return true;
+  } else if (chunkId === 0x09003007) {
+    const version = p.int32();
+
+    p.list(() => p.float());
+    p.list(() => p.int32());
+
+    return true;
   }
 }

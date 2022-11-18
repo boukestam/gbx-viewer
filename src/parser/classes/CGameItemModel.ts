@@ -20,7 +20,10 @@ export enum EItemType {
 };
 
 export function parseChunk(p: GameBoxParser, chunkId: number, node: Node): any {
-  if (chunkId === 0x2E002008) {
+  if (chunkId === 0x2E002000) {
+    const itemType = p.int32();
+    return {itemType};
+  } else if (chunkId === 0x2E002008) {
     const nadeoSkinFids = p.list(() => p.nodeRef());
     return {nadeoSkinFids};
   } else if (chunkId === 0x2E002009) {
@@ -85,5 +88,110 @@ export function parseChunk(p: GameBoxParser, chunkId: number, node: Node): any {
     }
 
     return result;
+  } else if (chunkId === 0x2E00201c) {
+    const version = p.int32();
+
+    if (version >= 5) {
+      const defaultPlacement = p.nodeRef();
+      return {defaultPlacement}
+    }
+
+    const length = p.int32();
+
+    if (version >= 1) {
+      p.skip(24);
+
+      if (version >= 2) {
+        p.skip(20);
+
+        if (version >= 3) {
+          p.skip(8);
+
+          p.list(() => p.vec3(), length);
+
+          if (version >= 4) {
+            p.skip(4);
+          }
+        }
+      }
+    }
+
+    return true;
+  } else if (chunkId === 0x2E00201E) {
+    const version = p.int32();
+
+    const archeTypeRef = p.string();
+
+    if (archeTypeRef.length === 0) {
+      p.skip(4);
+    }
+
+    if (version >= 6) {
+      p.skip(4);
+
+      if (version >= 7) {
+        p.skip(4);
+      }
+    }
+
+    return {archeTypeRef};
+  } else if (chunkId === 0x2E00201F) {
+    const version = p.int32();
+
+    if (version < 7) {
+      if (version >= 5) {
+        p.string();
+        p.string();
+        p.skip(4);
+      }
+
+      if (version >= 4) {
+        p.skip(4);
+      }
+
+      if (version < 3) {
+        p.skip(2);
+      }
+    }
+
+    const waypointType = p.int32();
+
+    if (version < 8) {
+      p.iso4();
+    }
+
+    let disableLightmap;
+
+    if (version >= 6) {
+      disableLightmap = p.bool();
+
+      if (version >= 10) {
+        p.skip(4);
+
+        if (version >= 11) {
+          p.skip(1);
+
+          if (version >= 12) p.skip(8);
+        }
+      }
+    }
+
+    return {waypointType, disableLightmap};
+  } else if (chunkId === 0x2E002020) {
+    const version = p.int32();
+
+    if (version < 2) {
+      p.string();
+      p.nodeRef();
+      return true;
+    }
+
+    const iconFid = p.string();
+
+    if (version >= 3) {
+      p.skip(1);
+    }
+
+    return {iconFid};
   }
 }

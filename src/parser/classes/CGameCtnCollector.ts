@@ -15,7 +15,7 @@ export function parseChunk(p: GameBoxParser, chunkId: number, node: Node): any {
 
     return { pageName, iconFid };
   } else if (chunkId === 0x2e00100b) {
-    return p.meta();
+    return {info: p.meta()};
   } else if (chunkId === 0x2e00100c) {
     const collectorName = p.string();
     return { collectorName };

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import "./App.css";
-import { Environment, Ghost, Sample } from "./parser/nodes";
+import { CGameCtnChallenge, Ghost, Sample } from "./parser/nodes";
 import GameBoxParser from "./parser/parser";
 import { Node } from "./parser/types";
 import { Renderer } from "./Renderer";
@@ -33,11 +33,11 @@ async function loadGbx(url: string) {
 
 async function loadMap(
   url: string
-): Promise<{ map: Environment; ghost?: GhostSamples }> {
+): Promise<{ map: CGameCtnChallenge; ghost?: GhostSamples }> {
   const map = await loadGbx(url);
 
   return {
-    map: map.body as unknown as Environment,
+    map: map.body as unknown as CGameCtnChallenge,
     ghost:
       map.body.raceValidateGhost &&
       parseGhost(map.body.raceValidateGhost as Ghost),
@@ -60,7 +60,7 @@ async function loadGhost(url: string): Promise<GhostSamples> {
 }
 
 function App() {
-  const [map, setMap] = useState<Environment | null>(null);
+  const [map, setMap] = useState<CGameCtnChallenge | null>(null);
   const [ghost, setGhost] = useState<GhostSamples | null>(null);
 
   useEffect(() => {

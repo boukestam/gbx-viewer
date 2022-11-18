@@ -1,6 +1,9 @@
 import earcut from "earcut";
 import * as THREE from "three";
+import { ELayerType } from "../parser/classes/CPlugCrystal";
+import { GeometryLayer } from "../parser/nodes";
 import { Vec3, Color } from "../parser/types";
+import { BlockMesh } from "./block";
 
 export interface MeshOutput {
   vertices: number[];
@@ -159,4 +162,30 @@ export function createCube(size: Vec3, color: Color) {
   );
 
   return createMesh(out);
+}
+
+export function createCrystal(crystal: any): BlockMesh {
+  const geometry = crystal.layers.find((layer: any) => layer.type === ELayerType.Geometry) as GeometryLayer;
+
+  const out: MeshOutput = {
+    vertices: [],
+    colors: []
+  };
+
+  const color = new Color(0, 0, 0);
+
+  for (const face of geometry.faces) {
+    if (face.verts.length === 3) {
+      triangle(face.verts[0].position, face.verts[1].position, face.verts[2].position, color, out);
+    } else if (face.verts.length === 4) {
+      triangle(face.verts[0].position, face.verts[1].position, face.verts[2].position, color, out);
+      triangle(face.verts[0].position, face.verts[2].position, face.verts[3].position, color, out);
+    }
+  }
+  
+  return {
+    mesh: createMesh(out),
+    offset: Vec3.zero(),
+    rotation: Vec3.zero()
+  };
 }

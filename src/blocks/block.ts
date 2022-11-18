@@ -1,5 +1,7 @@
+import { CGameCtnAnchoredObject, CGameCtnChallenge } from "../parser/nodes";
 import { Vec3 } from "../parser/types";
 import { createDeco } from "./deco";
+import { createCrystal } from "./mesh";
 import { createPlatform } from "./platform";
 import { createRoad } from "./road";
 
@@ -17,4 +19,17 @@ export function createBlock(name: string): BlockMesh {
   return createDeco(name);
   
   //throw new Error("Unknown block type: " + name);
+}
+
+export function createAnchoredObject(object: CGameCtnAnchoredObject, map: CGameCtnChallenge): BlockMesh {
+  if (!map.embeddedData) return createBlock("");
+  
+  const item = Object.values(map.embeddedData).find((item) => item.body.info[0] === object.itemModel[0]);
+
+  if (item) {
+    const crystal = item.body.entityModelEdition.meshCrystal;
+    return createCrystal(crystal);
+  }
+
+  return createBlock("");
 }

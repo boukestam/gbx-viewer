@@ -1,4 +1,6 @@
-import { Color, FileRef, Transform, Vec3, Node } from "./types";
+import { EItemType } from "./classes/CGameItemModel";
+import { ELayerType } from "./classes/CPlugCrystal";
+import { Color, FileRef, Transform, Vec3, Node, Vec2 } from "./types";
 
 export interface Block {
   blockName: string;
@@ -11,7 +13,64 @@ export interface Block {
   blockParameters: any;
 }
 
-export interface Environment {
+export interface Material {
+  isNatural: boolean;
+  isUsingGameMaterial: boolean;
+  link: string;
+  surfacePhysicId: number;
+  textureSizeInMeters: number;
+  tilingU: number;
+  tilingV: number;
+  userTextures: string[];
+}
+
+export interface GeometryLayer {
+  faces: {
+    group: {
+      name: string;
+    };
+    material: Material;
+    verts: {
+      position: Vec3;
+      uv: Vec2;
+    }[];
+  }[];
+}
+
+export interface CGameItemModel {
+  entityModelEdition: {
+    meshCrystal: {
+      layers: {
+        type: ELayerType;
+        [key: string]: any;
+      }[];
+      materials: Material[];
+    }
+  };
+  groundPoint: Vec3;
+  info: [string, string, string];
+  itemTypeE: EItemType;
+  orbitalCenterHeightFromGround: number;
+  orbitalPreviewAngle: number;
+  orbitalRadiusBase: number;
+  waypointType: number;
+}
+
+export interface CGameCtnAnchoredObject {
+  absolutePositionInMap: Vec3;
+  blockUnitCoord: Vec3;
+  color: number;
+  itemModel: [string, string, string];
+  pitchYawRoll: Vec3;
+  pivotPosition: Vec3;
+  scale: number;
+  waypointSpecialProperty?: {
+    tag: string;
+    order: number;
+  };
+}
+
+export interface CGameCtnChallenge {
   trackUID: string;
   environment: string;
   mapAuthor: string;
@@ -22,6 +81,12 @@ export interface Environment {
   size: Vec3;
   needUnlock: boolean;
   blocks: Block[];
+  anchoredObjects?: CGameCtnAnchoredObject[];
+  embeddedData?: {
+    [name: string]: {
+      body: CGameItemModel;
+    }
+  };
 }
 
 export interface Archive {
