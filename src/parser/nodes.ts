@@ -1,3 +1,4 @@
+import { DifficultyColor } from "./classes/CGameCtnChallenge";
 import { EItemType } from "./classes/CGameItemModel";
 import { ELayerType } from "./classes/CPlugCrystal";
 import { Color, FileRef, Transform, Vec3, Node, Vec2 } from "./types";
@@ -11,6 +12,7 @@ export interface Block {
   author: any;
   skin: any;
   blockParameters: any;
+  color?: DifficultyColor;
 }
 
 export interface Material {

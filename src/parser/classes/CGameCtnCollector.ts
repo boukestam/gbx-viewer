@@ -48,5 +48,8 @@ export function parseChunk(p: GameBoxParser, chunkId: number, node: Node): any {
     }
 
     return { version, isInternal, isAdvanced, catalogPosition, prodState };
+  } else if (chunkId === 0x2e001012) {
+    p.skip(16);
+    return true;
   }
 }

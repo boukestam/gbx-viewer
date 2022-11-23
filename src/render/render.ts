@@ -5,6 +5,7 @@ import { Transform } from "../parser/types";
 import { hexToSrgb } from "../utils/color";
 import { loadBlocks } from "./blocks";
 import { Camera } from "./camera";
+import { Trail } from "./trail";
 
 const { GLTFLoader } = require("three/addons/loaders/GLTFLoader.js");
 
@@ -12,22 +13,25 @@ export function startRender(canvas: HTMLCanvasElement, map: CGameCtnChallenge, g
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
   renderer.outputEncoding = THREE.sRGBEncoding;
   renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-  renderer.setClearColor(0x00b4e2);
+  renderer.shadowMap.type = THREE.PCFShadowMap;
+  renderer.setClearColor(0xA7CBFE);
 
-  const fov = 45;
-  const aspect = 2; // the canvas default
-  const near = 1;
-  const far = 10000;
-  const camera = new Camera(fov, aspect, near, far);
+  const camera = new Camera(45, canvas.width / canvas.height, 1, 10000);
 
   const scene = new THREE.Scene();
 
-  const sun = new THREE.DirectionalLight(0xffffff, 0.8);
+  const hemiLight = new THREE.HemisphereLight( 0xffffff, 0xffffff, 0.6 );
+  hemiLight.color.setHSL( 0.6, 1, 0.6 );
+  hemiLight.groundColor.setHSL( 0.095, 1, 0.75 );
+  hemiLight.position.set( 0, 50, 0 );
+  scene.add( hemiLight );
+
+  const sun = new THREE.DirectionalLight(0xffffff, 1);
+  sun.color.setHSL( 0.1, 1, 0.95 );
   sun.castShadow = true;
   scene.add(sun);
 
-  const shadowMapSize = 400;
+  const shadowMapSize = 1000;
 
   sun.shadow.mapSize.width = 4096;
   sun.shadow.mapSize.height = 4096;
@@ -70,6 +74,17 @@ export function startRender(canvas: HTMLCanvasElement, map: CGameCtnChallenge, g
   const loader = new GLTFLoader();
 
   let car: THREE.Object3D;
+  let wheelFrontLeft: THREE.Object3D;
+  let wheelFrontRight: THREE.Object3D;
+  let wheelBackLeft: THREE.Object3D;
+  let wheelBackRight: THREE.Object3D;
+  let wheels: THREE.Object3D[];
+  let frontWheels: THREE.Object3D[];
+
+  let wheelRotation = 0;
+  let wheelAngle = 0;
+
+  const wheelTrails: Trail[] = [];
 
   loader.load(
     "models/car.glb",
@@ -78,8 +93,31 @@ export function startRender(canvas: HTMLCanvasElement, map: CGameCtnChallenge, g
     function (obj: any) {
       car = obj.scene;
       car.traverse((node: any) => {
+        if (node.name === 'WheelFrontLeft') wheelFrontLeft = node;
+        if (node.name === 'WheelFrontRight') wheelFrontRight = node;
+        if (node.name === 'WheelBackLeft') wheelBackLeft = node;
+        if (node.name === 'WheelBackRight') wheelBackRight = node;
+
         node.castShadow = true;
       });
+      
+      wheels = [wheelFrontLeft, wheelFrontRight, wheelBackLeft, wheelBackRight];
+      frontWheels = [wheelFrontLeft, wheelFrontRight];
+
+      for (const wheel of wheels) {
+        // specify points to create planar trail-head geometry
+        var trailHeadGeometry = [];
+        trailHeadGeometry.push( 
+          new THREE.Vector3( -1.0, 0.0, 0.0 ), 
+          new THREE.Vector3( 0.0, 0.0, 0.0 ), 
+          new THREE.Vector3( 1.0, 0.0, 0.0 ) 
+        );
+
+        const trail = new Trail(scene, wheel, new THREE.Vector3( 0.0, 0.0, 0.0 ));
+
+        wheelTrails.push(trail);
+      }
+      
       scene.add(car);
     },
 
@@ -117,13 +155,38 @@ export function startRender(canvas: HTMLCanvasElement, map: CGameCtnChallenge, g
       render(originalTime);
       return;
     }
+
     const sample = ghost.samples[sampleIndex];
     const sampleTransform = sample.transform as Transform;
+    const nextSample = ghost.samples[Math.min(sampleIndex + 1, ghost.samples.length - 1)];
 
     if (car) {
       const samplePosition = sampleTransform.position;
       car.position.set(samplePosition.x, samplePosition.y, samplePosition.z);
       car.rotation.setFromQuaternion(sampleTransform.rotation.toTHREE());
+
+      const steer = sample.steer || 0;
+      const diff = steer - wheelAngle;
+      if (diff < 0) {
+        wheelAngle = Math.max(steer, wheelAngle - delta * 10);
+      } else if (diff > 0) {
+        wheelAngle = Math.min(steer, wheelAngle + delta * 10);
+      }
+
+      for (const wheel of wheels) {
+        wheelRotation += sampleTransform.speed * 0.1 * delta;
+
+        wheel.rotation.set(
+          wheelRotation, 
+          frontWheels.includes(wheel) ? wheelAngle * -0.35 : 0, 
+          0,
+          'YXZ'
+        );
+      }
+      
+      for (const trail of wheelTrails) {
+        trail.advance();
+      }
     }
 
     if (resizeRendererToDisplaySize()) {
@@ -132,7 +195,7 @@ export function startRender(canvas: HTMLCanvasElement, map: CGameCtnChallenge, g
       camera.updateProjectionMatrix();
     }
 
-    camera.update(delta, car, sun, sample, ghost.samples[Math.min(sampleIndex + 1, ghost.samples.length - 1)]);
+    camera.update(delta, car, sun, sample, nextSample);
 
     renderer.render(scene, camera);
 

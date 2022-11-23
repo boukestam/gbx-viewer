@@ -21,12 +21,13 @@ export function hexToRgb(hex: string) {
   } : {r: 0, g: 0, b: 0};
 }
 
-export function hexToSrgb(hex: string): Color {
+export function hexToSrgb(hex: string, alpha?: number): Color {
   const {r, g, b} = hexToRgb(hex);
 
   return new Color(
     Math.max((r / 255) - 0.2, 0),
     Math.max((g / 255) - 0.2, 0),
-    Math.max((b / 255) - 0.2, 0)
+    Math.max((b / 255) - 0.2, 0),
+    alpha
   );
 }

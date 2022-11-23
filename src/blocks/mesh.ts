@@ -26,12 +26,15 @@ function triangle(a: Vec3, b: Vec3, c: Vec3, color: Color, out: MeshOutput) {
     color.r,
     color.g,
     color.b,
+    color.a,
     color.r,
     color.g,
     color.b,
+    color.a,
     color.r,
     color.g,
-    color.b
+    color.b,
+    color.a
   );
 }
 
@@ -121,16 +124,27 @@ export function createMesh(out: MeshOutput) {
   );
   geometry.setAttribute(
     "color",
-    new THREE.BufferAttribute(new Float32Array(out.colors), 3)
+    new THREE.BufferAttribute(new Float32Array(out.colors), 4)
   );
   geometry.computeVertexNormals();
 
+  let transparent = false;
+  for (let i = 0; i < out.colors.length; i += 4) {
+    if (out.colors[i] < 1) transparent = true;
+  }
+
+  const material = new THREE.MeshPhongMaterial({
+    vertexColors: true,
+    shadowSide: THREE.FrontSide,
+    transparent: transparent,
+    flatShading: false,
+    shininess: 0,
+    reflectivity: 0
+  });
+
   const mesh = new THREE.Mesh(
     geometry,
-    new THREE.MeshPhongMaterial({
-      vertexColors: true,
-      shadowSide: THREE.FrontSide
-    })
+    material
   );
 
   mesh.receiveShadow = true;
@@ -192,7 +206,7 @@ export function createCrystal(crystal: any): BlockMesh {
   
   return {
     mesh: createMesh(out),
-    offset: Vec3.zero(),
-    rotation: Vec3.zero()
+    rotation: Vec3.zero(),
+    pivot: Vec3.zero()
   };
 }

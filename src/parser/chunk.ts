@@ -36,6 +36,10 @@ import {parseChunk as parseCPlugTreeGenerator} from "./classes/CPlugTreeGenerato
 import {parseChunk as parseCPlugCrystal} from "./classes/CPlugCrystal";
 import {parseChunk as parseCPlugMaterialUserInst} from "./classes/CPlugMaterialUserInst";
 import {parseChunk as parseCGameItemPlacementParam} from "./classes/CGameItemPlacementParam";
+import {parseChunk as parseCtnMediaBlockCamFxShake} from "./classes/CtnMediaBlockCamFxShake";
+import {parseChunk as parseGameCtnMediaBlockFog} from "./classes/GameCtnMediaBlockFog";
+import {parseChunk as parseCGameCommonItemEntityModel} from "./classes/CGameCommonItemEntityModel";
+import {parseChunk as parseCGameCtnMediaBlockFxColors} from "./classes/CGameCtnMediaBlockFxColors";
 
 const chunks = [
   parseCGameCtnCollectorList,
@@ -72,7 +76,11 @@ const chunks = [
   parseCPlugTreeGenerator,
   parseCPlugCrystal,
   parseCPlugMaterialUserInst,
-  parseCGameItemPlacementParam
+  parseCGameItemPlacementParam,
+  parseCtnMediaBlockCamFxShake,
+  parseGameCtnMediaBlockFog,
+  parseCGameCommonItemEntityModel,
+  parseCGameCtnMediaBlockFxColors
 ];
 
 export const skippableChunks = [

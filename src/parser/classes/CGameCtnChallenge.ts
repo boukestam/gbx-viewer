@@ -3,6 +3,15 @@ import { Chunk, Node, Vec3 } from "../types";
 import GameBoxParser from "../parser";
 import AdmZip from "adm-zip";
 
+export enum DifficultyColor {
+  Default,
+  White,
+  Green,
+  Blue,
+  Red,
+  Black
+}
+
 function parseBakedBlock(p: GameBoxParser) {
   const name = p.lookBackString();
   const direction = p.byte();
@@ -247,7 +256,12 @@ export function parseChunk(p: GameBoxParser, chunkId: number, node: Node): any {
 
       for (const entry of entries) {
         const e = new GameBoxParser(entry.getData());
-        embeddedData[entry.name] = e.parse();
+        try {
+          embeddedData[entry.name] = e.parse();
+        } catch (e) {
+          console.warn("Error while parsing embedded data: " + entry.name);
+          console.warn(e);
+        }
       }
     }
 
@@ -271,11 +285,11 @@ export function parseChunk(p: GameBoxParser, chunkId: number, node: Node): any {
     if (version > 0) throw new Error("Version not supported");
 
     for (const block of node.blocks) {
-      block.color = p.byte();
+      block.color = p.byte() as DifficultyColor;
     }
 
     for (const block of node.bakedBlocks) {
-      block.color = p.byte();
+      block.color = p.byte() as DifficultyColor;
     }
 
     for (const item of node.anchoredObjects) {

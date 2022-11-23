@@ -4,7 +4,11 @@ import { CGameCtnChallenge, Ghost, Sample } from "./parser/nodes";
 import GameBoxParser from "./parser/parser";
 import { Renderer } from "./Renderer";
 
-const name = "Stuartville Track";
+//const name = "Stuartville Track";
+//const name = "Niepodlegli (ft mime)";
+//const name = "Aqua";
+const name = "TestPivots";
+//const namce = "TestCurves";
 
 const mapUrl = `/data/${name}.Map.Gbx`;
 const replayUrl = `/data/${name}.Replay.Gbx`;

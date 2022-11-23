@@ -1,5 +1,7 @@
+import { Bezier } from "bezier-js";
+import { DifficultyColor } from "../parser/classes/CGameCtnChallenge";
 import { Vec3, Color } from "../parser/types";
-import { hexToSrgb } from "../utils/color";
+import { bezierAtX } from "../utils/bezier";
 import { BlockMesh } from "./block";
 import { Colors } from "./colors";
 import { CurveDescription } from "./curve";
@@ -13,7 +15,7 @@ export interface Surface {
 }
 
 export const trackHeight = 0.25;
-const trackHeightDirt = 0.025;
+const trackHeightDirt = 0.05;
 
 const bumpWidthLeft = 0.09375;
 const bumpWidthMiddle = 0.125;
@@ -22,23 +24,27 @@ const bumpHeightLeft = trackHeight + 0.14;
 const bumpHeightMiddle = trackHeight + 0.2;
 const bumpHeightTop = trackHeight + 0.25;
 
-export function getMiddlePoints(left: number, right: number, height: number, stepSize: number = 0.1) {
+export function getMiddlePoints(left: number, right: number, height: number | ((x: number) => number), stepSize: number = 0.1) {
   const points: Vec3[] = [];
 
   if (left < right) {
-    for (let i = left; i < right; i += stepSize) points.push(new Vec3(i, height, 0));
+    for (let i = left; i < right; i += stepSize) {
+      points.push(new Vec3(i, typeof height === 'function' ? height((i - left) / (right - left)) : height, 0));
+    }
   }
 
   if (left > right) {
-    for (let i = left; i > right; i -= stepSize) points.push(new Vec3(i, height, 0));
+    for (let i = left; i > right; i -= stepSize) {
+      points.push(new Vec3(i, typeof height === 'function' ? height((i - left) / (right - left)) : height, 0));
+    }
   }
 
-  points.push(new Vec3(right, height, 0));
+  points.push(new Vec3(right, typeof height === 'function' ? height(1) : height, 0));
 
   return points;
 }
 
-export function getMiddlePointCount(left: number, right: number, height: number, stepSize: number = 0.1) {
+export function getMiddlePointCount(left: number, right: number, stepSize: number = 0.1) {
   let count = 0;
   
   if (left < right) {
@@ -52,41 +58,23 @@ export function getMiddlePointCount(left: number, right: number, height: number,
   return count + 1;
 }
 
-export function getTrackSurface(name: string, left: number, right: number): Surface {
-  if (name.includes("Dirt")) return { 
-    points: getMiddlePoints(left, right, trackHeight),
-    colors: new Array(getMiddlePointCount(left, right, trackHeight)).fill(Colors.dirtColor),
-    color: Colors.dirtColor,
-    lineColor: Colors.trackLine
-  };
+export function getDifficultyColor(difficulty: DifficultyColor, colors: {[key: string]: Color}) {
+  if (difficulty === DifficultyColor.White) return colors.white;
+  if (difficulty === DifficultyColor.Green) return colors.green;
+  if (difficulty === DifficultyColor.Blue) return colors.blue;
+  if (difficulty === DifficultyColor.Red) return colors.red;
+  if (difficulty === DifficultyColor.Black) return colors.black;
+  return colors.default;
+}
 
-  if (name.includes("Water")) return { 
-    points: getMiddlePoints(left, right, trackHeight),
-    colors: new Array(getMiddlePointCount(left, right, trackHeight)).fill(Colors.waterColor),
-    color: Colors.waterColor,
-    lineColor: Colors.trackLine
-  };
-
-  if (name.includes("Grass")) return { 
-    points: getMiddlePoints(left, right, trackHeight),
-    colors: new Array(getMiddlePointCount(left, right, trackHeight)).fill(Colors.grassColor),
-    color: Colors.grassColor,
-    lineColor: Colors.trackLine
-  };
-
-  if (name.includes("Ice")) return { 
-    points: getMiddlePoints(left, right, trackHeight),
-    colors: new Array(getMiddlePointCount(left, right, trackHeight)).fill(Colors.iceColor),
-    color: Colors.iceColor,
-    lineColor: Colors.trackLine
-  };
-
-  if (name.includes("Tech")) return { 
-    points: getMiddlePoints(left, right, trackHeight),
-    colors: new Array(getMiddlePointCount(left, right, trackHeight) - 1).fill(Colors.techColor),
-    color: Colors.techColor,
-    lineColor: Colors.techBorderColor
-  };
+export function getTrackSurface(
+  name: string, 
+  left: number, 
+  right: number, 
+  difficulty?: DifficultyColor,
+  type: 'road' | 'platform' = 'road'
+): Surface {
+  const difficultyColor = difficulty && getDifficultyColor(difficulty, Colors.difficulty);
 
   if (name.includes("Bump")) return { 
     points: [
@@ -111,10 +99,53 @@ export function getTrackSurface(name: string, left: number, right: number): Surf
       Colors.bumpColorLeft,
     ],
     color: Colors.bumpColorTop,
-    lineColor: Colors.bumpBorderColor
+    lineColor: difficultyColor || Colors.bumpBorderColor
   };
+  
+  let color, lineColor;
+  let height: number | ((x: number) => number) = trackHeight;
 
-  throw new Error("Unknown track type: " + name);
+  if (name.includes("Dirt")) {
+    color = Colors.dirtColor;
+    lineColor = difficultyColor || Colors.dirtColor;
+
+    if (type === 'road') {
+      const bezier = new Bezier(
+        0, 0.17, 
+        0.15, trackHeightDirt,
+        0.85, trackHeightDirt,
+        1, 0.17,
+      );
+      height = (x: number) => bezierAtX(bezier, x) || 0.17;
+    }
+  } else if (name.includes("Water")) {
+    color = Colors.waterColor;
+    lineColor = difficultyColor || Colors.waterColor;
+  } else if (name.includes("Grass")) {
+    color = Colors.grassColor;
+    lineColor = difficultyColor || Colors.grassColor;
+  } else if (name.includes("Plastic")) {
+    color = difficulty ? getDifficultyColor(difficulty, Colors.plastic) : Colors.plastic.default;
+    lineColor = difficultyColor || Colors.trackLine;
+  } else if (name.includes("Ice")) {
+    color = Colors.iceColor;
+    lineColor = difficultyColor || Colors.iceColor;
+  } else if (name.includes("Tech")) {
+    color = Colors.techColor;
+    lineColor = difficultyColor || Colors.difficulty.green;
+  } else if (name.includes("Platform")) {
+    color = Colors.platformColor;
+    lineColor = difficultyColor || Colors.platformColor;
+  } else {
+    throw new Error("Unknown track type: " + name);
+  }
+
+  return { 
+    points: getMiddlePoints(left, right, height),
+    colors: new Array(getMiddlePointCount(left, right) + 1).fill(color),
+    color: color,
+    lineColor: lineColor
+  };
 }
 
 export function createSurface(name: string, surface: Surface, result: CurveDescription): BlockMesh {
@@ -127,8 +158,6 @@ export function createSurface(name: string, surface: Surface, result: CurveDescr
     point.sub(new Vec3(0, 0, 16)).add(new Vec3(0, 0, 32).mul(step));
 
   const numSteps = 20;
-  const pos = result.size.add(result.offset);
-  const worldOffset = new Vec3(32 - pos.x * 16, -pos.y * 4, 32 - pos.z * 16);
 
   f = (point: Vec3, step: number) => {
     const t = step / numSteps;
@@ -188,8 +217,8 @@ export function createSurface(name: string, surface: Surface, result: CurveDescr
 
   const blockMesh = {
     mesh: createMesh(out),
-    offset: worldOffset,
-    rotation: result.rotation || Vec3.zero()
+    rotation: result.rotation || Vec3.zero(),
+    pivot: result.pivot ? new Vec3(result.pivot.x * 16, result.pivot.y * 8, result.pivot.z * 16) : Vec3.zero()
   };
 
   return blockMesh;

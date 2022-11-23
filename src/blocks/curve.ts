@@ -1,5 +1,6 @@
 import { Bezier } from "bezier-js";
 import { Vec3 } from "../parser/types";
+import { bezierAtX } from "../utils/bezier";
 
 export type StepFunction = (ratio: number, t: number) => number;
 
@@ -15,6 +16,7 @@ export interface CurveDescription {
   size: Vec3;
   offset: Vec3;
   rotation?: Vec3;
+  pivot?: Vec3;
 }
 
 export function curve() {
@@ -127,11 +129,7 @@ export function pipe(flipHorizontal?: boolean, flipVertical?: boolean, ratio?: S
     );
 
   return {
-    f: (x: number, t: number) => {
-      const intersections = bezier.intersects({p1: {x: x, y: -1}, p2: {x: x, y: 1}});
-      const pt = bezier.get(intersections[0] as number);
-      return pt.y;
-    }, 
+    f: (x: number, t: number) => bezierAtX(bezier, x), 
     axis: new Vec3(0, 1, 0),
     ratio,
     xAsStep: true,

@@ -7,13 +7,21 @@ export class Camera extends THREE.PerspectiveCamera {
   listeners: any = {};
   keys: { [key: string]: boolean } = {};
 
-  mode: 'follow' | 'free' = 'free';
+  mode: 'follow' | 'free' = 'follow';
 
   init(trackCenter: Vec3) {
-    this.position.x = 1000;
-    this.position.y = 100;
-    this.position.z = 900;
-    this.lookAt(trackCenter.toTHREE());
+    const storedData = localStorage.getItem("camera");
+    if(storedData) {
+      const stored = JSON.parse(storedData);
+      this.position.set(stored.position.x, stored.position.y, stored.position.z);
+      this.rotation.set(stored.rotation.x, stored.rotation.y, stored.rotation.z);
+      this.mode = 'free';
+    } else {
+      this.position.x = 1000;
+      this.position.y = 100;
+      this.position.z = 900;
+      this.lookAt(trackCenter.toTHREE());
+    }
   }
 
   start() {
@@ -22,6 +30,21 @@ export class Camera extends THREE.PerspectiveCamera {
 
       if (e.key === 'c') {
         this.mode = this.mode === 'follow' ? 'free' : 'follow';
+      } else if (e.key === 'x') {
+        localStorage.setItem("camera", JSON.stringify({
+          position: {
+            x: this.position.x,
+            y: this.position.y,
+            z: this.position.z
+          },
+          rotation: {
+            x: this.rotation.x,
+            y: this.rotation.y,
+            z: this.rotation.z
+          }
+        }));
+      } else if (e.key === 'z') {
+        localStorage.removeItem("camera");
       }
     };
     this.listeners.keyupListener = (e: KeyboardEvent) => {
@@ -61,13 +84,13 @@ export class Camera extends THREE.PerspectiveCamera {
         .normalize();
       const cameraPosition = car.position
         .clone()
-        .sub(sampleVelocity.multiplyScalar(20));
+        .sub(sampleVelocity.multiplyScalar(10));
         this.position.set(
         cameraPosition.x,
-        cameraPosition.y + 8,
+        cameraPosition.y + 4,
         cameraPosition.z
       );
-      this.lookAt(car.position);
+      this.lookAt(car.position.clone().add(car.up.clone().multiplyScalar(2)));
 
       sun.position.set(car.position.x, car.position.y + 500, car.position.z);
       sun.target = car;

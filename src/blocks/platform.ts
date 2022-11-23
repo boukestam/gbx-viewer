@@ -1,3 +1,5 @@
+import { DifficultyColor } from "../parser/classes/CGameCtnChallenge";
+import { Block } from "../parser/nodes";
 import { Vec3 } from "../parser/types";
 import { BlockMesh } from "./block";
 import { Colors } from "./colors";
@@ -22,8 +24,6 @@ import {
   getTrackSurface,
   Surface,
 } from "./surface";
-
-
 
 const platforms: { [name: string]: () => CurveDescription } = {
  Base: () => ({
@@ -393,8 +393,8 @@ const platforms: { [name: string]: () => CurveDescription } = {
   }),
 };
 
-function getPlatformSurface(name: string): Surface {
-  const surface = getTrackSurface(name, -1, 1);
+function getPlatformSurface(block: Block): Surface {
+  const surface = getTrackSurface(block.blockName, -1, 1, block.color, 'platform');
 
   const points = [...surface.points, ...getMiddlePoints(1, -1, 0)];
 
@@ -405,7 +405,7 @@ function getPlatformSurface(name: string): Surface {
 
     Colors.edgeColor,
 
-    ...new Array(getMiddlePointCount(1, -1, 0) - 1).fill(Colors.bottomColor),
+    ...new Array(getMiddlePointCount(1, -1) - 1).fill(Colors.bottomColor),
     Colors.edgeColor,
   ];
 
@@ -413,7 +413,7 @@ function getPlatformSurface(name: string): Surface {
 }
 
 export function getPlatformCurve(name: string): CurveDescription {
-  name = name.replace(/Platform(Tech|Dirt|Ice|Platform)/, "");
+  name = name.replace(/Platform(Tech|Dirt|Ice|Plastic|Platform)/, "");
 
   if (!(name in platforms))
     return {
@@ -425,8 +425,8 @@ export function getPlatformCurve(name: string): CurveDescription {
   return platforms[name]();
 }
 
-export function createPlatform(name: string): BlockMesh {
-  const curve = getPlatformCurve(name);
-  const surface = getPlatformSurface(name);
-  return createSurface(name, surface, curve);
+export function createPlatform(block: Block): BlockMesh {
+  const curve = getPlatformCurve(block.blockName);
+  const surface = getPlatformSurface(block);
+  return createSurface(block.blockName, surface, curve);
 }

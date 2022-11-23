@@ -11,7 +11,6 @@ export function parseChunk(p: GameBoxParser, chunkId: number, node: Node): any {
       result.isUsingGameMaterial = p.bool(true);
     }
 
-    p.lookBackString();
     result.model = p.lookBackString();
     result.baseTexture = p.string();
 
@@ -86,7 +85,8 @@ export function parseChunk(p: GameBoxParser, chunkId: number, node: Node): any {
 
     return result;
   } else if (chunkId === 0x090FD002) {
-    p.skip(8);
+    const version = p.uint32();
+    p.uint32();
     return true;
   }
 }

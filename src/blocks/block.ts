@@ -1,4 +1,4 @@
-import { CGameCtnAnchoredObject, CGameCtnChallenge } from "../parser/nodes";
+import { Block, CGameCtnAnchoredObject, CGameCtnChallenge } from "../parser/nodes";
 import { Vec3 } from "../parser/types";
 import { createDeco } from "./deco";
 import { createCrystal } from "./mesh";
@@ -7,23 +7,23 @@ import { createRoad } from "./road";
 
 export interface BlockMesh {
   mesh: THREE.Mesh;
-  offset: Vec3;
   rotation: Vec3;
+  pivot: Vec3;
 }
 
 const cache: {[name: string]: BlockMesh} = {};
 
-export function createBlock(name: string): BlockMesh {
-  if (name in cache) return cache[name];
+export function createBlock(block: Block): BlockMesh {
+  if (block.blockName in cache) return cache[block.blockName];
 
   let mesh;
 
-  if (name.includes("Road")) mesh = createRoad(name);
-  else if (name.startsWith("Deco")) mesh = createDeco(name);
-  else if (name.startsWith("Platform")) mesh = createPlatform(name);
-  else mesh = createDeco(name);
+  if (block.blockName.includes("Road")) mesh = createRoad(block);
+  else if (block.blockName.startsWith("Deco")) mesh = createDeco(block.blockName);
+  else if (block.blockName.startsWith("Platform")) mesh = createPlatform(block);
+  else mesh = createDeco(block.blockName);
 
-  cache[name] = mesh;
+  cache[block.blockName] = mesh;
 
   return mesh;
   
@@ -33,7 +33,7 @@ export function createBlock(name: string): BlockMesh {
 export function createAnchoredObject(object: CGameCtnAnchoredObject, map: CGameCtnChallenge): BlockMesh {
   if (object.itemModel[0] in cache) return cache[object.itemModel[0]];
   
-  if (!map.embeddedData) return createBlock("");
+  if (!map.embeddedData) return createDeco("");
   
   const item = Object.values(map.embeddedData).find((item) => item.body.info[0] === object.itemModel[0]);
 
@@ -44,5 +44,5 @@ export function createAnchoredObject(object: CGameCtnAnchoredObject, map: CGameC
     return mesh;
   }
 
-  return createBlock("");
+  return createDeco("");
 }
