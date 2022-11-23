@@ -7,8 +7,9 @@ import { createRoad } from "./road";
 
 export interface BlockMesh {
   mesh: THREE.Mesh;
-  rotation: Vec3;
-  pivot: Vec3;
+  rotation?: Vec3;
+  offset?: Vec3;
+  pivot?: Vec3;
 }
 
 const cache: {[name: string]: BlockMesh} = {};

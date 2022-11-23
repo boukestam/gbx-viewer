@@ -205,8 +205,6 @@ export function createCrystal(crystal: any): BlockMesh {
   }
   
   return {
-    mesh: createMesh(out),
-    rotation: Vec3.zero(),
-    pivot: Vec3.zero()
+    mesh: createMesh(out)
   };
 }

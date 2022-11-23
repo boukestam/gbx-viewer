@@ -14,7 +14,7 @@ export interface CurveDescription {
     xAsStep?: boolean;
   }[];
   size: Vec3;
-  offset: Vec3;
+  offset?: Vec3;
   rotation?: Vec3;
   pivot?: Vec3;
 }

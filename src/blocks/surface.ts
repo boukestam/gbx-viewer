@@ -154,12 +154,9 @@ export function createSurface(name: string, surface: Surface, result: CurveDescr
     colors: [],
   };
 
-  let f = (point: Vec3, step: number) =>
-    point.sub(new Vec3(0, 0, 16)).add(new Vec3(0, 0, 32).mul(step));
-
   const numSteps = 20;
 
-  f = (point: Vec3, step: number) => {
+  const f = (point: Vec3, step: number) => {
     const t = step / numSteps;
 
     const getF = (a: 'x' | 'y' | 'z') => {
@@ -215,11 +212,14 @@ export function createSurface(name: string, surface: Surface, result: CurveDescr
 
   shape(surface.points, surface.colors, f, numSteps, out);
 
-  const blockMesh = {
+  const offset = (result.offset ? new Vec3(result.offset.x * 16, result.offset.y * 8, result.offset.z * 16) :  Vec3.zero()).sub(new Vec3(32 - result.size.x * 16, 0, 32 - result.size.z * 16));
+
+  return {
     mesh: createMesh(out),
     rotation: result.rotation || Vec3.zero(),
-    pivot: result.pivot ? new Vec3(result.pivot.x * 16, result.pivot.y * 8, result.pivot.z * 16) : Vec3.zero()
+    offset: offset,
+    pivot: result.pivot ? 
+      new Vec3(result.pivot.x * 16, result.pivot.y * 8, result.pivot.z * 16) : 
+      new Vec3(0, 0, 0)
   };
-
-  return blockMesh;
 }

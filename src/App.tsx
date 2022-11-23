@@ -7,8 +7,9 @@ import { Renderer } from "./Renderer";
 //const name = "Stuartville Track";
 //const name = "Niepodlegli (ft mime)";
 //const name = "Aqua";
-const name = "Deep Dip";
-//const namce = "TestCurves";
+//const name = "Deep Dip";
+const name = "TestPlatforms";
+//const name = "TestCurves";
 
 const mapUrl = `/data/${name}.Map.Gbx`;
 const replayUrl = `/data/${name}.Replay.Gbx`;

@@ -26,369 +26,338 @@ import {
 } from "./surface";
 
 const platforms: { [name: string]: () => CurveDescription } = {
- Base: () => ({
+  Base: () => ({
     curves: [straight()],
-    size: new Vec3(1, 1, 1),
-    offset: new Vec3(0, -1, 0),
+    size: new Vec3(1, 1, 1)
   }),
 
- Slope2Base: () => ({
+  Slope2Base: () => ({
     curves: [slope()],
-    size: new Vec3(1, 2, 1),
-    offset: new Vec3(0, -2, 0),
+    size: new Vec3(1, 2, 1)
   }),
- SlopeBase: () => ({
+  SlopeBase: () => ({
     curves: [slope()],
-    size: new Vec3(1, 1, 1),
-    offset: new Vec3(0, -1, 0),
+    size: new Vec3(1, 1, 1)
   }),
 
- Slope2Straight: () => ({
+  Slope2Straight: () => ({
     curves: [straight(), raised(2)],
-    size: new Vec3(1, 1, 1),
-    offset: new Vec3(0, -1, 0),
+    size: new Vec3(1, 1, 1)
   }),
- Slope2Start: () => ({
+  Slope2Start: () => ({
     curves: [straight(), convex(), raised(2)],
-    size: new Vec3(1, 1, 1),
-    offset: new Vec3(0, -1, 0),
+    size: new Vec3(1, 1, 1)
   }),
- Slope2End: () => ({
+  Slope2End: () => ({
     curves: [straight(), concave(), raised(2)],
-    size: new Vec3(1, 1, 1),
-    offset: new Vec3(0, -1, 0),
+    size: new Vec3(1, 1, 1)
   }),
 
- Slope2UTop: () => ({
+  Slope2UTop: () => ({
     curves: [straight(), concave()],
-    size: new Vec3(1, 1, 1),
-    offset: new Vec3(0, -1, 0),
+    size: new Vec3(1, 1, 1)
   }),
- Slope2UBottom: () => ({
+  Slope2UBottom: () => ({
     curves: [straight(), convex(), up(2)],
-    size: new Vec3(1, 1, 1),
-    offset: new Vec3(0, -1, 0),
+    size: new Vec3(1, 1, 1)
   }),
- Slope2UBottomInGround: () => ({
+  Slope2UBottomInGround: () => ({
     curves: [straight(), convex()],
-    size: new Vec3(1, 1, 1),
-    offset: new Vec3(0, -1, 0),
+    size: new Vec3(1, 1, 1)
   }),
 
- Slope2Curve1In: () => ({
+  Slope2Curve1In: () => ({
     curves: [curve(), tilt()],
-    size: new Vec3(1, 2, 1),
-    offset: new Vec3(0, -2, 0),
+    size: new Vec3(1, 2, 1)
   }),
- Slope2Curve2In: () => ({
+  Slope2Curve2In: () => ({
     curves: [curve(), tilt()],
-    size: new Vec3(2, 2, 2),
-    offset: new Vec3(0, -2, 0),
+    size: new Vec3(2, 2, 2)
   }),
- Slope2Curve3In: () => ({
+  Slope2Curve3In: () => ({
     curves: [curve(), tilt()],
-    size: new Vec3(3, 2, 3),
-    offset: new Vec3(0, -2, 0),
+    size: new Vec3(3, 2, 3)
   }),
 
- Slope2Curve1Out: () => ({
+  Slope2Curve1Out: () => ({
     curves: [curve(), tilt(true)],
-    size: new Vec3(1, 2, 1),
-    offset: new Vec3(0, -2, 0),
+    size: new Vec3(1, 2, 1)
   }),
- Slope2Curve2Out: () => ({
+  Slope2Curve2Out: () => ({
     curves: [curve(), tilt(true)],
-    size: new Vec3(2, 2, 2),
-    offset: new Vec3(0, -2, 0),
+    size: new Vec3(2, 2, 2)
   }),
- Slope2Curve3Out: () => ({
+  Slope2Curve3Out: () => ({
     curves: [curve(), tilt(true)],
-    size: new Vec3(3, 2, 3),
-    offset: new Vec3(0, -2, 0),
+    size: new Vec3(3, 2, 3)
   }),
 
- TiltTransition1UpLeft: () => ({
+  TiltTransition1UpLeft: () => ({
     curves: [
       flat((r, t) => (r + 1) * 0.5),
       slope(false, (r, t) => (r - 1) * -0.5),
     ],
-    size: new Vec3(1, 2, 1),
-    offset: new Vec3(0, -2, 0),
+    size: new Vec3(1, 2, 1)
   }),
- TiltTransition2UpLeft: () => ({
+  TiltTransition2UpLeft: () => ({
     curves: [
       flat((r, t) => (r + 1) * 0.5),
       slope(false, (r, t) => (r - 1) * -0.5),
     ],
     size: new Vec3(1, 2, 2),
-    offset: new Vec3(1, -2, 0),
+    offset: new Vec3(1, 0, 0),
   }),
 
- TiltTransition1UpRight: () => ({
+  TiltTransition1UpRight: () => ({
     curves: [
       slope(false, (r, t) => (r + 1) * 0.5),
       flat((r, t) => (r - 1) * -0.5),
     ],
-    size: new Vec3(1, 2, 1),
-    offset: new Vec3(0, -2, 0),
+    size: new Vec3(1, 2, 1)
   }),
- TiltTransition2UpRight: () => ({
+  TiltTransition2UpRight: () => ({
     curves: [
       slope(false, (r, t) => (r + 1) * 0.5),
       flat((r, t) => (r - 1) * -0.5),
     ],
     size: new Vec3(1, 2, 2),
-    offset: new Vec3(1, -2, 0),
+    offset: new Vec3(1, 0, 0),
   }),
 
- TiltTransition1DownLeft: () => ({
+  TiltTransition1DownLeft: () => ({
     curves: [
       flat((r, t) => (r + 1) * 0.5),
       slope(false, (r, t) => (r - 1) * -0.5),
       up(1, (r, t) => (r + 1) * 0.5),
     ],
-    size: new Vec3(1, 2, 1),
-    offset: new Vec3(0, -2, 0),
+    size: new Vec3(1, 2, 1)
   }),
- TiltTransition2DownLeft: () => ({
+  TiltTransition2DownLeft: () => ({
     curves: [
       flat((r, t) => (r + 1) * 0.5),
       slope(false, (r, t) => (r - 1) * -0.5),
       up(1, (r, t) => (r + 1) * 0.5),
     ],
     size: new Vec3(1, 2, 2),
-    offset: new Vec3(1, -2, 0),
+    offset: new Vec3(1, 0, 0),
   }),
 
- TiltTransition1DownRight: () => ({
+  TiltTransition1DownRight: () => ({
     curves: [
       slope(false, (r, t) => (r + 1) * 0.5),
       flat((r, t) => (r - 1) * -0.5),
       up(1, (r, t) => (r - 1) * -0.5),
     ],
-    size: new Vec3(1, 2, 1),
-    offset: new Vec3(0, -2, 0),
+    size: new Vec3(1, 2, 1)
   }),
- TiltTransition2DownRight: () => ({
+  TiltTransition2DownRight: () => ({
     curves: [
       slope(false, (r, t) => (r + 1) * 0.5),
       flat((r, t) => (r - 1) * -0.5),
       up(1, (r, t) => (r - 1) * -0.5),
     ],
     size: new Vec3(1, 2, 2),
-    offset: new Vec3(1, -2, 0),
+    offset: new Vec3(1, 0, 0),
   }),
 
- LoopStart: () => ({
+  LoopStart: () => ({
+    curves: [loop()],
+    size: new Vec3(1, 4, 1)
+  }),
+  Slope2LoopStart: () => ({
     curves: [loop()],
     size: new Vec3(1, 4, 1),
-    offset: new Vec3(0, -4, 0),
-  }),
- Slope2LoopStart: () => ({
-    curves: [loop()],
-    size: new Vec3(1, 4, 1),
-    offset: new Vec3(0, -4, 0),
+    offset: new Vec3(0, 0, 0),
   }),
 
- LoopStartCurve1In: () => ({
+  LoopStartCurve1In: () => ({
     curves: [curve(), pipe()],
-    size: new Vec3(1, 4, 1),
-    offset: new Vec3(0, -4, 0),
+    size: new Vec3(1, 4, 1)
   }),
- LoopStartCurve2In: () => ({
+  LoopStartCurve2In: () => ({
     curves: [curve(), pipe()],
-    size: new Vec3(2, 4, 2),
-    offset: new Vec3(0, -4, 0),
+    size: new Vec3(2, 4, 2)
   }),
- LoopStartCurve3In: () => ({
+  LoopStartCurve3In: () => ({
     curves: [curve(), pipe()],
-    size: new Vec3(3, 4, 3),
-    offset: new Vec3(0, -4, 0),
+    size: new Vec3(3, 4, 3)
   }),
 
- LoopStartCurve0Out: () => ({
+  LoopStartCurve0Out: () => ({
     curves: [curve(), pipe(true)],
-    size: new Vec3(1, 4, 1),
-    offset: new Vec3(0, -4, 0),
+    size: new Vec3(1, 4, 1)
   }),
- LoopStartCurve1Out: () => ({
+  LoopStartCurve1Out: () => ({
     curves: [curve(), pipe(true)],
-    size: new Vec3(2, 4, 2),
-    offset: new Vec3(0, -4, 0),
+    size: new Vec3(2, 4, 2)
   }),
- LoopStartCurve2Out: () => ({
+  LoopStartCurve2Out: () => ({
     curves: [curve(), pipe(true)],
-    size: new Vec3(3, 4, 3),
-    offset: new Vec3(0, -4, 0),
+    size: new Vec3(3, 4, 3)
   }),
- LoopStartCurve3Out: () => ({
+  LoopStartCurve3Out: () => ({
     curves: [curve(), pipe(true)],
-    size: new Vec3(4, 4, 4),
-    offset: new Vec3(0, -4, 0),
+    size: new Vec3(4, 4, 4)
   }),
 
- LoopOutStart: () => ({
+  LoopOutStart: () => ({
     curves: [loop(true)],
-    size: new Vec3(1, 4, 1),
-    offset: new Vec3(0, -4, 0),
+    size: new Vec3(1, 4, 1)
   }),
 
- LoopOutStartCurve1: () => ({
+  LoopOutStartCurve1: () => ({
     curves: [curve(), pipe(true, true)],
-    size: new Vec3(1, 4, 1),
-    offset: new Vec3(0, -4, 0),
+    size: new Vec3(1, 4, 1)
   }),
- LoopOutStartCurve2: () => ({
+  LoopOutStartCurve2: () => ({
     curves: [curve(), pipe(true, true)],
-    size: new Vec3(2, 4, 2),
-    offset: new Vec3(0, -4, 0),
+    size: new Vec3(2, 4, 2)
   }),
- LoopOutStartCurve3: () => ({
+  LoopOutStartCurve3: () => ({
     curves: [curve(), pipe(true, true)],
-    size: new Vec3(3, 4, 3),
-    offset: new Vec3(0, -4, 0),
+    size: new Vec3(3, 4, 3)
   }),
 
- LoopOutStartCurve1In: () => ({
+  LoopOutStartCurve1In: () => ({
     curves: [curve(), pipe(false, true)],
     size: new Vec3(2, 4, 2),
-    offset: new Vec3(0, -4, -2),
+    offset: new Vec3(0, 0, -2),
   }),
- LoopOutStartCurve2In: () => ({
+  LoopOutStartCurve2In: () => ({
     curves: [curve(), pipe(false, true)],
     size: new Vec3(3, 4, 3),
-    offset: new Vec3(0, -4, -2),
+    offset: new Vec3(0, 0, -2),
   }),
- LoopOutStartCurve3In: () => ({
+  LoopOutStartCurve3In: () => ({
     curves: [curve(), pipe(false, true)],
     size: new Vec3(4, 4, 4),
-    offset: new Vec3(0, -4, -2),
+    offset: new Vec3(0, 0, -2),
   }),
 
- LoopEnd: () => ({
+  LoopEnd: () => ({
     curves: [loop()],
     size: new Vec3(1, 4, 1),
     offset: new Vec3(0, 4, 0),
     rotation: new Vec3(Math.PI, Math.PI, 0)
   }),
 
- LoopEndCurve1In: () => ({
+  LoopEndCurve1In: () => ({
     curves: [curve(), pipe()],
     size: new Vec3(1, 4, 1),
     offset: new Vec3(0, 4, 0),
-    rotation: new Vec3(Math.PI, Math.PI * -0.5, 0)
+    rotation: new Vec3(Math.PI, Math.PI * 0.5, 0)
   }),
- LoopEndCurve2In: () => ({
+  LoopEndCurve2In: () => ({
     curves: [curve(), pipe()],
     size: new Vec3(2, 4, 2),
     offset: new Vec3(0, 4, 0),
-    rotation: new Vec3(Math.PI, Math.PI * -0.5, 0)
+    rotation: new Vec3(Math.PI, Math.PI * 0.5, 0)
   }),
- LoopEndCurve3In: () => ({
+  LoopEndCurve3In: () => ({
     curves: [curve(), pipe()],
     size: new Vec3(3, 4, 3),
     offset: new Vec3(0, 4, 0),
-    rotation: new Vec3(Math.PI, Math.PI * -0.5, 0)
+    rotation: new Vec3(Math.PI, Math.PI * 0.5, 0)
   }),
 
- LoopEndCurve0Out: () => ({
+  LoopEndCurve0Out: () => ({
     curves: [curve(), pipe(true)],
     size: new Vec3(1, 4, 1),
     offset: new Vec3(0, 4, 0),
-    rotation: new Vec3(Math.PI, Math.PI * 0.5, 0)
+    rotation: new Vec3(Math.PI, Math.PI * -0.5, 0)
   }),
- LoopEndCurve1Out: () => ({
+  LoopEndCurve1Out: () => ({
     curves: [curve(), pipe(true)],
     size: new Vec3(2, 4, 2),
     offset: new Vec3(0, 4, 0),
-    rotation: new Vec3(Math.PI, Math.PI * 0.5, 0)
+    rotation: new Vec3(Math.PI, Math.PI * -0.5, 0)
   }),
- LoopEndCurve2Out: () => ({
+  LoopEndCurve2Out: () => ({
     curves: [curve(), pipe(true)],
     size: new Vec3(3, 4, 3),
     offset: new Vec3(0, 4, 0),
-    rotation: new Vec3(Math.PI, Math.PI * 0.5, 0)
+    rotation: new Vec3(Math.PI, Math.PI * -0.5, 0)
   }),
- LoopEndCurve3Out: () => ({
+  LoopEndCurve3Out: () => ({
     curves: [curve(), pipe(true)],
     size: new Vec3(4, 4, 4),
     offset: new Vec3(0, 4, 0),
-    rotation: new Vec3(Math.PI, Math.PI * 0.5, 0)
+    rotation: new Vec3(Math.PI, Math.PI * -0.5, 0)
   }),
 
- WallCurve3x4: () => ({
+  WallCurve3x4: () => ({
     curves: [loop()],
     size: new Vec3(1, 12, 3),
-    offset: new Vec3(2, -8, -3),
+    offset: new Vec3(2, 2, -3),
     rotation: new Vec3(0, Math.PI * 0.5, Math.PI * -0.5)
   }),
- WallCurve2x4: () => ({
+  WallCurve2x4: () => ({
     curves: [loop()],
     size: new Vec3(1, 8, 2),
-    offset: new Vec3(1, -4, -2),
+    offset: new Vec3(1, 2, -2),
     rotation: new Vec3(0, Math.PI * 0.5, Math.PI * -0.5)
   }),
- WallCurve1x4: () => ({
+  WallCurve1x4: () => ({
     curves: [loop()],
     size: new Vec3(1, 4, 1),
-    offset: new Vec3(0, 0, -1),
+    offset: new Vec3(0, 2, -1),
     rotation: new Vec3(0, Math.PI * 0.5, Math.PI * -0.5)
   }),
 
- WallCurve3: () => ({
+  WallCurve3: () => ({
     curves: [loop()],
     size: new Vec3(0.25, 12, 3),
-    offset: new Vec3(3, -11, -3),
+    offset: new Vec3(3, 0.5, -3),
     rotation: new Vec3(0, Math.PI * 0.5, Math.PI * -0.5)
   }),
- WallCurve2: () => ({
+  WallCurve2: () => ({
     curves: [loop()],
     size: new Vec3(0.25, 8, 2),
-    offset: new Vec3(2, -7, -2),
+    offset: new Vec3(2, 0.5, -2),
     rotation: new Vec3(0, Math.PI * 0.5, Math.PI * -0.5)
   }),
- WallCurve1: () => ({
+  WallCurve1: () => ({
     curves: [loop()],
     size: new Vec3(0.25, 4, 1),
-    offset: new Vec3(1, -3, -1),
+    offset: new Vec3(1, 0.5, -1),
     rotation: new Vec3(0, Math.PI * 0.5, Math.PI * -0.5)
   }),
 
- WallOutCurve3x4: () => ({
+  WallOutCurve3x4: () => ({
     curves: [loop(true)],
     size: new Vec3(1, 12, 3),
-    offset: new Vec3(-1, -8, 0),
+    offset: new Vec3(-1, 2, 0),
     rotation: new Vec3(0, 0, Math.PI * 0.5)
   }),
- WallOutCurve2x4: () => ({
+  WallOutCurve2x4: () => ({
     curves: [loop(true)],
     size: new Vec3(1, 8, 2),
-    offset: new Vec3(-1, -4, 0),
+    offset: new Vec3(-1, 2, 0),
     rotation: new Vec3(0, 0, Math.PI * 0.5)
   }),
- WallOutCurve1x4: () => ({
+  WallOutCurve1x4: () => ({
     curves: [loop(true)],
     size: new Vec3(1, 4, 1),
-    offset: new Vec3(-1, 0, 0),
+    offset: new Vec3(-1, 2, 0),
     rotation: new Vec3(0, 0, Math.PI * 0.5)
   }),
 
- WallOutCurve3: () => ({
+  WallOutCurve3: () => ({
     curves: [loop(true)],
     size: new Vec3(0.25, 12, 3),
-    offset: new Vec3(-1, -11, 0),
+    offset: new Vec3(-1, 0.5, 0),
     rotation: new Vec3(0, 0, Math.PI * 0.5)
   }),
- WallOutCurve2: () => ({
+  WallOutCurve2: () => ({
     curves: [loop(true)],
     size: new Vec3(0.25, 8, 2),
-    offset: new Vec3(-1, -7, 0),
+    offset: new Vec3(-1, 0.5, 0),
     rotation: new Vec3(0, 0, Math.PI * 0.5)
   }),
- WallOutCurve1: () => ({
+  WallOutCurve1: () => ({
     curves: [loop(true)],
     size: new Vec3(0.25, 4, 1),
-    offset: new Vec3(-1, -3, 0),
+    offset: new Vec3(-1, 0.5, 0),
     rotation: new Vec3(0, 0, Math.PI * 0.5)
   }),
 };
@@ -405,7 +374,7 @@ function getPlatformSurface(block: Block): Surface {
 
     Colors.edgeColor,
 
-    ...new Array(getMiddlePointCount(1, -1) - 1).fill(Colors.bottomColor),
+     ...new Array(getMiddlePointCount(1, -1) - 1).fill(Colors.bottomColor),
     Colors.edgeColor,
   ];
 

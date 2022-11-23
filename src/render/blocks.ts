@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { Vector3 } from "three";
 import { BlockMesh, createAnchoredObject, createBlock } from "../blocks/block";
 import { CGameCtnChallenge } from "../parser/nodes";
 import { Vec3 } from "../parser/types";
@@ -15,7 +16,9 @@ export function loadBlocks(map: CGameCtnChallenge, scene: THREE.Scene) {
     const pivot = new THREE.Group();
     pivot.add(mesh);
 
-    pivot.rotateOnAxis(new Vec3(0, 1, 0).toTHREE(), rotation.y);
+    pivot.rotateOnAxis(new Vector3(1, 0, 0), rotation.x);
+    pivot.rotateOnAxis(new Vector3(0, 1, 0), rotation.y);
+    pivot.rotateOnAxis(new Vector3(0, 0, 1), rotation.z);
 
     pivot.position.set(position.x, position.y, position.z);
 
@@ -32,9 +35,13 @@ export function loadBlocks(map: CGameCtnChallenge, scene: THREE.Scene) {
 
     addPivot(
       blockMesh, 
-      pos, 
-      blockMesh.pivot, 
-      new Vec3(0, -block.rotation * (Math.PI / 2) + Math.PI + blockMesh.rotation.y, 0)
+      pos.add(blockMesh.offset || Vec3.zero()), 
+      blockMesh.pivot || Vec3.zero(), 
+      new Vec3(
+        blockMesh.rotation?.x || 0, 
+        -block.rotation * (Math.PI / 2) + Math.PI + (blockMesh.rotation?.y || 0), 
+        blockMesh.rotation?.z || 0
+      )
     );
   }
 
