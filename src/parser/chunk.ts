@@ -18,12 +18,12 @@ import {parseChunk as parseCGameCtnMediaBlockCameraPath} from "./classes/CGameCt
 import {parseChunk as parseCGameCtnMediaBlockCameraCustom} from "./classes/CGameCtnMediaBlockCameraCustom";
 import {parseChunk as parseCGameCtnMediaBlockImage} from "./classes/CGameCtnMediaBlockImage";
 import {parseChunk as parseCGameCtnMediaBlockText} from "./classes/CGameCtnMediaBlockText";
-import {parseChunk as parseGameCtnMediaBlockTrails} from "./classes/GameCtnMediaBlockTrails";
+import {parseChunk as parseGameCtnMediaBlockTrails} from "./classes/CGameCtnMediaBlockTrails";
 import {parseChunk as parseCGameCtnMediaBlockTransitionFade} from "./classes/CGameCtnMediaBlockTransitionFade";
 import {parseChunk as parseCGameCtnAnchoredObject} from "./classes/CGameCtnAnchoredObject";
 import {parseChunk as parseCGameCtnMacroBlockInfo} from "./classes/CGameCtnMacroBlockInfo";
 import {parseChunk as parseCGameCtnAutoTerrain} from "./classes/CGameCtnAutoTerrain";
-import {parseChunk as parseGameCtnMediaBlockDOF} from "./classes/GameCtnMediaBlockDOF";
+import {parseChunk as parseGameCtnMediaBlockDOF} from "./classes/CGameCtnMediaBlockDOF";
 import {parseChunk as parseCGameWaypointSpecialProperty} from "./classes/CGameWaypointSpecialProperty";
 import {parseChunk as parseCGameCtnZoneGenealogy} from "./classes/CGameCtnZoneGenealogy";
 import {parseChunk as parseCGameCtnMediaBlockEntity} from "./classes/CGameCtnMediaBlockEntity";
@@ -36,10 +36,13 @@ import {parseChunk as parseCPlugTreeGenerator} from "./classes/CPlugTreeGenerato
 import {parseChunk as parseCPlugCrystal} from "./classes/CPlugCrystal";
 import {parseChunk as parseCPlugMaterialUserInst} from "./classes/CPlugMaterialUserInst";
 import {parseChunk as parseCGameItemPlacementParam} from "./classes/CGameItemPlacementParam";
-import {parseChunk as parseCtnMediaBlockCamFxShake} from "./classes/CtnMediaBlockCamFxShake";
-import {parseChunk as parseGameCtnMediaBlockFog} from "./classes/GameCtnMediaBlockFog";
+import {parseChunk as parseCtnMediaBlockCamFxShake} from "./classes/CGameCtnMediaBlockCamFxShake";
+import {parseChunk as parseGameCtnMediaBlockFog} from "./classes/CGameCtnMediaBlockFog";
 import {parseChunk as parseCGameCommonItemEntityModel} from "./classes/CGameCommonItemEntityModel";
 import {parseChunk as parseCGameCtnMediaBlockFxColors} from "./classes/CGameCtnMediaBlockFxColors";
+import {parseChunk as parseCGameCtnMediaBlockSound} from "./classes/CGameCtnMediaBlockSound";
+import {parseChunk as parseCGameCtnMediaBlockInterface} from "./classes/CGameCtnMediaBlockInterface";
+import {parseChunk as parseCGameCtnMediaBlockDirtyLens} from "./classes/CGameCtnMediaBlockDirtyLens";
 
 const chunks = [
   parseCGameCtnCollectorList,
@@ -80,7 +83,10 @@ const chunks = [
   parseCtnMediaBlockCamFxShake,
   parseGameCtnMediaBlockFog,
   parseCGameCommonItemEntityModel,
-  parseCGameCtnMediaBlockFxColors
+  parseCGameCtnMediaBlockFxColors,
+  parseCGameCtnMediaBlockSound,
+  parseCGameCtnMediaBlockInterface,
+  parseCGameCtnMediaBlockDirtyLens
 ];
 
 export const skippableChunks = [
