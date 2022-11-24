@@ -12,6 +12,8 @@ export interface Block {
   skin?: any;
   blockParameters?: any;
   color?: DifficultyColor;
+  absolutePositionInMap?: Vec3;
+  pitchYawRoll?: Vec3;
 }
 
 export interface Material {

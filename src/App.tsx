@@ -7,8 +7,8 @@ import { Renderer } from "./Renderer";
 //const name = "Stuartville Track";
 //const name = "Niepodlegli (ft mime)";
 //const name = "Aqua";
-//const name = "Deep Dip";
-const name = "TestPivots";
+const name = "Deep Dip";
+//const name = "TestPivots";
 //const name = "TestDeco";
 
 const mapUrl = `/maps/${name}.Map.Gbx`;

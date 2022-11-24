@@ -14,7 +14,8 @@ export const Colors = {
 
   techColor: hexToSrgb('#B2ACAF'),
 
-  grassColor: hexToSrgb('#668444'),
+  grassColor: hexToSrgb('#6B8743'),
+  grassDarkColor: hexToSrgb('#63813F'),
   waterColor: hexToSrgb('#8EE4F2', 0),
   iceColor: hexToSrgb('#ffffff'),
   platformColor: hexToSrgb('#B2ACAF'),

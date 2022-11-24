@@ -280,6 +280,21 @@ export function parseChunk(p: GameBoxParser, chunkId: number, node: Node): any {
     const dayDuration = p.int32();
 
     return {dayTime, dynamicDayLight, dayDuration};
+  } else if (chunkId === 0x0304305f) {
+    const version = p.int32();
+
+    if (version > 0) throw new Error("Version not supported");
+
+    // Free blocks
+
+    for (const block of node.blocks.concat(node.bakedBlocks) as Block[]) {
+      if ((block.flags & 0x20000000) === 0) continue;
+
+      block.absolutePositionInMap = p.vec3();
+      block.pitchYawRoll = p.vec3();
+    }
+
+    return true;
   } else if (chunkId === 0x03043062) {
     const version = p.int32();
 

@@ -2,7 +2,6 @@ import * as THREE from "three";
 import { GhostSamples } from "../App";
 import { CGameCtnChallenge } from "../parser/nodes";
 import { Transform } from "../parser/types";
-import { hexToSrgb } from "../utils/color";
 import { loadBlocks } from "./blocks";
 import { Camera } from "./camera";
 import { Trail } from "./trail";

@@ -1,5 +1,5 @@
 import { Vec3 } from "../parser/types";
-import { CURVE_SIZE } from "../utils/constants";
+import { BLOCK_SIZE, CURVE_SIZE } from "../utils/constants";
 import { BlockMesh } from "./block";
 import { Colors } from "./colors";
 import { createMesh, MeshOutput, triangle } from "./mesh";
@@ -10,15 +10,22 @@ export function createGrass(count: number): BlockMesh {
     colors: [],
   };
 
-  const topLeft = new Vec3(-CURVE_SIZE.x, 0, CURVE_SIZE.z);
-  const topRight = new Vec3(CURVE_SIZE.x, 0, CURVE_SIZE.z);
-  const bottomLeft = new Vec3(-CURVE_SIZE.x, 0, -CURVE_SIZE.z);
-  const bottomRight = new Vec3(CURVE_SIZE.x, 0, -CURVE_SIZE.z);
+  const quarter = BLOCK_SIZE.x * 0.25;
 
-  triangle(bottomLeft, topLeft, topRight, Colors.grassColor, out);
-  triangle(bottomLeft, topRight, bottomRight, Colors.grassColor, out);
+  for (let i = 0; i < 4; i++) {
+    const left = -CURVE_SIZE.x + i * quarter;
+    const right = -CURVE_SIZE.x + (i + 1) * quarter;
 
-  console.log("Create grass");
+    const topLeft = new Vec3(left, 0, CURVE_SIZE.z);
+    const topRight = new Vec3(right, 0, CURVE_SIZE.z);
+    const bottomLeft = new Vec3(left, 0, -CURVE_SIZE.z);
+    const bottomRight = new Vec3(right, 0, -CURVE_SIZE.z);
+
+    const color = i % 2 === 0 ? Colors.grassColor : Colors.grassDarkColor;
+
+    triangle(bottomLeft, topLeft, topRight, color, out);
+    triangle(bottomLeft, topRight, bottomRight, color, out);
+  }
 
   return {mesh: createMesh(out, count)}
 }

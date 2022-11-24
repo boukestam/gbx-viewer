@@ -62,28 +62,41 @@ export function loadBlocks(map: CGameCtnChallenge, scene: THREE.Scene) {
     const blockMesh = createBlock(block, counts[name]);
     if (!blockMesh) continue;
 
-    if (block.flags & (1 << 29)) console.log(block);
+    if ((block.flags & 0x20000000) > 0) {
+      // Free block
+      addPivot(
+        scene,
+        blockMesh.mesh, 
+        indexes[name],
+        block.absolutePositionInMap || Vec3.zero(), 
+        blockMesh.pivot || Vec3.zero(), 
+        new Vec3(0, block.pitchYawRoll?.x || 0, 0)
+      );
 
-    const pos = new Vec3(
-      block.coord.x * BLOCK_SIZE.x + BLOCK_SIZE.x, 
-      (block.coord.y - 8) * BLOCK_SIZE.y, 
-      block.coord.z * BLOCK_SIZE.z + BLOCK_SIZE.z
-    ).add(blockMesh.offset || Vec3.zero());
+      trackCenter = trackCenter.add(block.absolutePositionInMap || Vec3.zero());
+    } else {
+      const pos = new Vec3(
+        block.coord.x * BLOCK_SIZE.x + BLOCK_SIZE.x, 
+        (block.coord.y - 8) * BLOCK_SIZE.y, 
+        block.coord.z * BLOCK_SIZE.z + BLOCK_SIZE.z
+      ).add(blockMesh.offset || Vec3.zero());
 
-    addPivot(
-      scene,
-      blockMesh.mesh, 
-      indexes[name],
-      pos, 
-      blockMesh.pivot || Vec3.zero(), 
-      new Vec3(
-        blockMesh.rotation?.x || 0, 
-        -block.rotation * (Math.PI / 2) + Math.PI + (blockMesh.rotation?.y || 0), 
-        blockMesh.rotation?.z || 0
-      )
-    );
+      addPivot(
+        scene,
+        blockMesh.mesh, 
+        indexes[name],
+        pos, 
+        blockMesh.pivot || Vec3.zero(), 
+        new Vec3(
+          blockMesh.rotation?.x || 0, 
+          -block.rotation * (Math.PI / 2) + Math.PI + (blockMesh.rotation?.y || 0), 
+          blockMesh.rotation?.z || 0
+        )
+      );
 
-    trackCenter = trackCenter.add(pos);
+      trackCenter = trackCenter.add(pos);
+    }
+
     blockCount++;
 
     indexes[name]++;

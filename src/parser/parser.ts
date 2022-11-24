@@ -83,8 +83,12 @@ export default class GameBoxParser {
         const chunkDataSize = this.uint32();
         this.skip(chunkDataSize);
       } else {
+        let skipTo = -1;
+
         if (chunkFlags.parsableSkippable) {
-          this.skip(8); // skip and chunk size
+          this.skip(4); // skip byte
+          const chunkDataSize = this.uint32();
+          skipTo = this.parser.tell() + chunkDataSize;
         }
 
         const data = parseChunk(this, chunkId, node);
@@ -93,6 +97,8 @@ export default class GameBoxParser {
             node[key] = data[key];
           }
         }
+
+        if (skipTo !== -1) this.parser.seek(skipTo);
       }
     }
 
