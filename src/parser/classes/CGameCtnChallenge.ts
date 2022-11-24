@@ -2,6 +2,7 @@ import { parseBlocks } from "../blocks";
 import { Chunk, Node, Vec3 } from "../types";
 import GameBoxParser from "../parser";
 import AdmZip from "adm-zip";
+import { Block } from "../nodes";
 
 export enum DifficultyColor {
   Default,
@@ -12,9 +13,9 @@ export enum DifficultyColor {
   Black
 }
 
-function parseBakedBlock(p: GameBoxParser) {
+function parseBakedBlock(p: GameBoxParser): Block {
   const name = p.lookBackString();
-  const direction = p.byte();
+  const rotation = p.byte();
   let coord = p.byte3();
   const flags = p.int32();
 
@@ -22,7 +23,7 @@ function parseBakedBlock(p: GameBoxParser) {
     coord = coord.sub(new Vec3(1, 0, 1));
   }
 
-  return {name, direction, coord, flags};
+  return {name, rotation, coord, flags};
 }
 
 export function parseChunk(p: GameBoxParser, chunkId: number, node: Node): any {
@@ -149,7 +150,7 @@ export function parseChunk(p: GameBoxParser, chunkId: number, node: Node): any {
     p.skip(4);
 
     const count = p.int32();
-    const bakedBlocks = [];
+    const bakedBlocks: Block[] = [];
 
     for (let i = 0; i < count; i++) {
       const block = parseBakedBlock(p);
@@ -293,7 +294,7 @@ export function parseChunk(p: GameBoxParser, chunkId: number, node: Node): any {
     }
 
     for (const item of node.anchoredObjects) {
-      item.color = p.byte();
+      item.color = p.byte() as DifficultyColor;
     }
 
     return true;

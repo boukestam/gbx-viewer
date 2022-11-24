@@ -55,11 +55,27 @@ export class Vec3 {
     return new Vec3(this.x - other.x, this.y - other.y, this.z - other.z);
   }
 
-  mul(value: number) {
+  mul(other: Vec3) {
+    return new Vec3(this.x * other.x, this.y * other.y, this.z * other.z);
+  }
+
+  div(other: Vec3) {
+    return new Vec3(this.x / other.x, this.y / other.y, this.z / other.z);
+  }
+
+  addScalar(value: number) {
+    return new Vec3(this.x + value, this.y + value, this.z + value);
+  }
+
+  subScalar(value: number) {
+    return new Vec3(this.x - value, this.y - value, this.z - value);
+  }
+
+  mulScalar(value: number) {
     return new Vec3(this.x * value, this.y * value, this.z * value);
   }
 
-  div(value: number) {
+  divScalar(value: number) {
     return new Vec3(this.x / value, this.y / value, this.z / value);
   }
 

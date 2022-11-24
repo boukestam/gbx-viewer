@@ -74,8 +74,8 @@ export class Camera extends THREE.PerspectiveCamera {
     document.addEventListener("mousemove", this.listeners.mousemoveListener);
   }
 
-  update(delta: number, car: THREE.Object3D, sun: THREE.DirectionalLight, currentSample: Sample, nextSample: Sample) {
-    if (this.mode === "follow" && car) {
+  update(delta: number, car: THREE.Object3D, sun: THREE.DirectionalLight, currentSample?: Sample, nextSample?: Sample) {
+    if (this.mode === "follow" && car && currentSample && nextSample) {
       const sampleTransform = currentSample.transform as Transform;
 
       const sampleVelocity = nextSample

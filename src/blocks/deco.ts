@@ -1,11 +1,8 @@
 import * as THREE from "three";
+import { Block } from "../parser/nodes";
 import { Vec3 } from "../parser/types";
 import { BlockMesh } from "./block";
 
-export function createDeco(name: string): BlockMesh {
-  return {
-    mesh: new THREE.Mesh(),
-    rotation: Vec3.zero(),
-    pivot: Vec3.zero()
-  };
+export function createDeco(block: Block, count: number): BlockMesh | null {
+  return null;
 }

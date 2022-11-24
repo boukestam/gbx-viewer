@@ -8,15 +8,21 @@ export function Renderer({
   ghost,
 }: {
   map: CGameCtnChallenge;
-  ghost: GhostSamples;
+  ghost?: GhostSamples;
 }) {
+  const containerRef = createRef<HTMLDivElement>();
   const canvasRef = createRef<HTMLCanvasElement>();
 
   useEffect(() => {
-    if (!canvasRef.current) return;
+    if (!containerRef.current || !canvasRef.current) return;
 
-    return startRender(canvasRef.current, map, ghost);
-  }, [canvasRef, ghost, map]);
+    return startRender(containerRef.current, canvasRef.current, map, ghost);
+  }, [containerRef, canvasRef, ghost, map]);
 
-  return <canvas ref={canvasRef} style={{ userSelect: "none" }}></canvas>;
+  return (
+    <>
+      <canvas ref={canvasRef} style={{ userSelect: "none" }}></canvas>
+      <div ref={containerRef} style={{ position: "fixed" }}></div>
+    </>
+  );
 }

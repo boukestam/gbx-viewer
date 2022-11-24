@@ -2,16 +2,20 @@ import { Bezier } from "bezier-js";
 import { DifficultyColor } from "../parser/classes/CGameCtnChallenge";
 import { Vec3, Color } from "../parser/types";
 import { bezierAtX } from "../utils/bezier";
+import { BLOCK_SIZE, CURVE_SIZE } from "../utils/constants";
 import { BlockMesh } from "./block";
 import { Colors } from "./colors";
 import { CurveDescription } from "./curve";
 import { MeshOutput, shape, createMesh } from "./mesh";
+
+export type TrackHeight = number | ((x: number) => number);
 
 export interface Surface {
   points: Vec3[];
   colors: Color[];
   color: Color;
   lineColor: Color;
+  height: TrackHeight;
 }
 
 export const trackHeight = 0.25;
@@ -24,22 +28,26 @@ const bumpHeightLeft = trackHeight + 0.14;
 const bumpHeightMiddle = trackHeight + 0.2;
 const bumpHeightTop = trackHeight + 0.25;
 
-export function getMiddlePoints(left: number, right: number, height: number | ((x: number) => number), stepSize: number = 0.1) {
+export function getTrackHeight(height: TrackHeight, x: number) {
+  return typeof height === 'function' ? height(x) : height;
+}
+
+export function getMiddlePoints(left: number, right: number, height: TrackHeight, stepSize: number = 0.1) {
   const points: Vec3[] = [];
 
   if (left < right) {
     for (let i = left; i < right; i += stepSize) {
-      points.push(new Vec3(i, typeof height === 'function' ? height((i - left) / (right - left)) : height, 0));
+      points.push(new Vec3(i, getTrackHeight(height, i), 0));
     }
   }
 
   if (left > right) {
     for (let i = left; i > right; i -= stepSize) {
-      points.push(new Vec3(i, typeof height === 'function' ? height((i - left) / (right - left)) : height, 0));
+      points.push(new Vec3(i, getTrackHeight(height, i), 0));
     }
   }
 
-  points.push(new Vec3(right, typeof height === 'function' ? height(1) : height, 0));
+  points.push(new Vec3(right, getTrackHeight(height, Math.max(left, right)), 0));
 
   return points;
 }
@@ -58,7 +66,7 @@ export function getMiddlePointCount(left: number, right: number, stepSize: numbe
   return count + 1;
 }
 
-export function getDifficultyColor(difficulty: DifficultyColor, colors: {[key: string]: Color}) {
+export function getDifficultyColor(difficulty: DifficultyColor | undefined, colors: {[key: string]: Color}) {
   if (difficulty === DifficultyColor.White) return colors.white;
   if (difficulty === DifficultyColor.Green) return colors.green;
   if (difficulty === DifficultyColor.Blue) return colors.blue;
@@ -90,6 +98,7 @@ export function getTrackSurface(
     ],
     colors: [
       Colors.bumpColorLeft,
+      Colors.bumpColorLeft,
       Colors.bumpColorMiddle,
 
       Colors.bumpColorTop,
@@ -97,13 +106,15 @@ export function getTrackSurface(
 
       Colors.bumpColorMiddle,
       Colors.bumpColorLeft,
+      Colors.bumpColorLeft,
     ],
     color: Colors.bumpColorTop,
-    lineColor: difficultyColor || Colors.bumpBorderColor
+    lineColor: difficultyColor || Colors.bumpBorderColor,
+    height: bumpHeightLine
   };
   
   let color, lineColor;
-  let height: number | ((x: number) => number) = trackHeight;
+  let height: TrackHeight = trackHeight;
 
   if (name.includes("Dirt")) {
     color = Colors.dirtColor;
@@ -111,12 +122,12 @@ export function getTrackSurface(
 
     if (type === 'road') {
       const bezier = new Bezier(
-        0, 0.17, 
-        0.15, trackHeightDirt,
-        0.85, trackHeightDirt,
-        1, 0.17,
+        -1, trackHeight, 
+        -1 + 0.372, trackHeight,
+        -1, trackHeightDirt,
+        0, trackHeightDirt,
       );
-      height = (x: number) => bezierAtX(bezier, x) || 0.17;
+      height = (x: number) => bezierAtX(bezier, x < 0 ? x : -x);
     }
   } else if (name.includes("Water")) {
     color = Colors.waterColor;
@@ -136,6 +147,9 @@ export function getTrackSurface(
   } else if (name.includes("Platform")) {
     color = Colors.platformColor;
     lineColor = difficultyColor || Colors.platformColor;
+  } else if (name.includes("TrackWall")) {
+    color = Colors.trackWallColor;
+    lineColor = Colors.trackWallColor;
   } else {
     throw new Error("Unknown track type: " + name);
   }
@@ -143,12 +157,13 @@ export function getTrackSurface(
   return { 
     points: getMiddlePoints(left, right, height),
     colors: new Array(getMiddlePointCount(left, right) + 1).fill(color),
-    color: color,
-    lineColor: lineColor
+    color,
+    lineColor,
+    height
   };
 }
 
-export function createSurface(name: string, surface: Surface, result: CurveDescription): BlockMesh {
+export function createSurface(surface: Surface, result: CurveDescription, count: number): BlockMesh {
   const out: MeshOutput = {
     vertices: [],
     colors: [],
@@ -185,7 +200,7 @@ export function createSurface(name: string, surface: Surface, result: CurveDescr
 
           if (curve.axis[a] === 1) sum += (pt.x * result.size[a] + x * -nv.x) * ratio;
           if (curve.axis[a] === 2) sum += (pt.y * result.size[a] + x * -nv.y) * ratio;
-          if (curve.axis[a] === 3) sum += (pt.x * result.size[a] + point.y * nv.x) * ratio;
+          if (curve.axis[a] === 3) sum += (pt.x * result.size[a] + point.y * nv.x * 0.5) * ratio;
           if (curve.axis[a] === 4) sum += (pt.y * result.size[a] + point.y * nv.y) * ratio;
           if (curve.axis[a] === 5) sum += (point[a] + pt.x * result.size[a]) * ratio;
           if (curve.axis[a] === 6) sum += (point[a] + pt.y * result.size[a]) * ratio;
@@ -204,22 +219,28 @@ export function createSurface(name: string, surface: Surface, result: CurveDescr
     };
 
     return new Vec3(
-      Math.max(-result.size.x, Math.min(result.size.x, getF('x'))) * 16, 
-      getF('y') * 8,
-      Math.max(-result.size.z, Math.min(result.size.z, getF('z'))) * 16
-    );
+      Math.max(-result.size.x, Math.min(result.size.x, getF('x'))), 
+      getF('y'),
+      Math.max(-result.size.z, Math.min(result.size.z, getF('z')))
+    ).mul(CURVE_SIZE);
   };
 
   shape(surface.points, surface.colors, f, numSteps, out);
 
-  const offset = (result.offset ? new Vec3(result.offset.x * 16, result.offset.y * 8, result.offset.z * 16) :  Vec3.zero()).sub(new Vec3(32 - result.size.x * 16, 0, 32 - result.size.z * 16));
+  const offset = (result.offset ? result.offset.mul(CURVE_SIZE) : Vec3.zero()).sub(
+    new Vec3(
+      BLOCK_SIZE.x - result.size.x * CURVE_SIZE.x, 
+      0, 
+      BLOCK_SIZE.z - result.size.z * CURVE_SIZE.z
+    )
+  );
 
   return {
-    mesh: createMesh(out),
+    mesh: createMesh(out, count),
     rotation: result.rotation || Vec3.zero(),
     offset: offset,
     pivot: result.pivot ? 
-      new Vec3(result.pivot.x * 16, result.pivot.y * 8, result.pivot.z * 16) : 
+      result.pivot.mul(CURVE_SIZE) : 
       new Vec3(0, 0, 0)
   };
 }

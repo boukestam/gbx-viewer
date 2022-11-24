@@ -3,16 +3,16 @@ import { Vec3 } from "../parser/types";
 import { BlockMesh } from "./block";
 import { Colors } from "./colors";
 import { chicane, concave, convex, curve, CurveDescription, flat, raised, slope, straight, tilt, up } from "./curve";
-import { createSurface, getTrackSurface, Surface, trackHeight } from "./surface";
+import { createSurface, getTrackHeight, getTrackSurface, Surface, trackHeight } from "./surface";
 
 const roadLeft = -0.9;
 const roadRight = 0.9;
 const borderHeight = 0.4;
-const borderWidth = 0.125;
+const borderWidth = 0.113;
 const trackLineOffset = 0.1875;
 const trackLineWidth = 0.01;
 
-const roads: {[name: string]: () => CurveDescription} = {
+export const roads: {[name: string]: () => CurveDescription} = {
   Straight: () => ({
     curves: [straight()],
     size: new Vec3(1, 1, 1)
@@ -60,12 +60,11 @@ const roads: {[name: string]: () => CurveDescription} = {
 
   SlopeBase2: () => ({
     curves: [slope()],
-    size: new Vec3(1, 2, 1),
-    offset: new Vec3(0, 0, 0)
+    size: new Vec3(1, 2, 1)
   }),
   SlopeBase: () => ({
     curves: [slope()],
-    size: new Vec3(1, 0, 1)
+    size: new Vec3(1, 1, 1)
   }),
   SlopeBase2x1: () => ({
     curves: [slope()],
@@ -280,7 +279,7 @@ const roads: {[name: string]: () => CurveDescription} = {
 
 function getRoadSurface(block: Block): Surface {
   const surface = getTrackSurface(
-    block.blockName, 
+    block.name, 
     roadLeft + borderWidth + trackLineOffset + trackLineWidth, 
     roadRight - borderWidth - trackLineOffset - trackLineWidth,
     block.color,
@@ -291,15 +290,39 @@ function getRoadSurface(block: Block): Surface {
     new Vec3(roadLeft, 0, 0),
     new Vec3(roadLeft, borderHeight, 0),
     new Vec3(roadLeft + borderWidth, borderHeight, 0),
-    new Vec3(roadLeft + borderWidth, trackHeight, 0),
-    new Vec3(roadLeft + borderWidth + trackLineOffset, 0.178, 0),
-    new Vec3(roadLeft + borderWidth + trackLineOffset + trackLineWidth, 0.17, 0),
+    new Vec3(
+      roadLeft + borderWidth, 
+      getTrackHeight(surface.height, roadLeft + borderWidth), 
+      0
+    ),
+    new Vec3(
+      roadLeft + borderWidth + trackLineOffset, 
+      getTrackHeight(surface.height, roadLeft + borderWidth + trackLineOffset), 
+      0
+    ),
+    new Vec3(
+      roadLeft + borderWidth + trackLineOffset + trackLineWidth, 
+      getTrackHeight(surface.height, roadLeft + borderWidth + trackLineOffset + trackLineWidth), 
+      0
+    ),
 
     ...surface.points,
 
-    new Vec3(roadRight - borderWidth - trackLineOffset - trackLineWidth, 0.17, 0),
-    new Vec3(roadRight - borderWidth - trackLineOffset,  0.178, 0),
-    new Vec3(roadRight - borderWidth, trackHeight, 0),
+    new Vec3(
+      roadRight - borderWidth - trackLineOffset - trackLineWidth, 
+      getTrackHeight(surface.height, roadRight - borderWidth - trackLineOffset - trackLineWidth), 
+      0
+    ),
+    new Vec3(
+      roadRight - borderWidth - trackLineOffset,  
+      getTrackHeight(surface.height, roadRight - borderWidth - trackLineOffset), 
+      0
+    ),
+    new Vec3(
+      roadRight - borderWidth, 
+      getTrackHeight(surface.height, roadRight - borderWidth), 
+      0
+    ),
     new Vec3(roadRight - borderWidth, borderHeight, 0),
     new Vec3(roadRight, borderHeight, 0),
     new Vec3(roadRight, 0, 0),
@@ -320,8 +343,7 @@ function getRoadSurface(block: Block): Surface {
     Colors.borderSideColor,
     Colors.borderColor,
     Colors.borderColor,
-    Colors.borderColor,
-    Colors.edgeColor,
+    Colors.bottomColor,
     Colors.edgeColor,
   ];
 
@@ -339,8 +361,8 @@ export function getRoadCurve(name: string): CurveDescription {
   return roads[name]();
 }
 
-export function createRoad(block: Block): BlockMesh {
-  const curve = getRoadCurve(block.blockName);
+export function createRoad(block: Block, count: number): BlockMesh {
+  const curve = getRoadCurve(block.name);
   const surface = getRoadSurface(block);
-  return createSurface(block.blockName, surface, curve);
+  return createSurface(surface, curve, count);
 }

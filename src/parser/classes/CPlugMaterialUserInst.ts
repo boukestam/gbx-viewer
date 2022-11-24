@@ -11,6 +11,7 @@ export function parseChunk(p: GameBoxParser, chunkId: number, node: Node): any {
       result.isUsingGameMaterial = p.bool(true);
     }
 
+    p.lookBackString();
     result.model = p.lookBackString();
     result.baseTexture = p.string();
 

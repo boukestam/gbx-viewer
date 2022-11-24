@@ -8,11 +8,11 @@ import { Renderer } from "./Renderer";
 //const name = "Niepodlegli (ft mime)";
 //const name = "Aqua";
 //const name = "Deep Dip";
-const name = "TestPlatforms";
-//const name = "TestCurves";
+const name = "TestPivots";
+//const name = "TestDeco";
 
-const mapUrl = `/data/${name}.Map.Gbx`;
-const replayUrl = `/data/${name}.Replay.Gbx`;
+const mapUrl = `/maps/${name}.Map.Gbx`;
+const replayUrl = `/maps/${name}.Replay.Gbx`;
 
 export interface GhostSamples extends Ghost {
   samples: Sample[];
@@ -69,8 +69,8 @@ async function loadGhost(url: string): Promise<GhostSamples> {
 }
 
 function App() {
-  const [map, setMap] = useState<CGameCtnChallenge | null>(null);
-  const [ghost, setGhost] = useState<GhostSamples | null>(null);
+  const [map, setMap] = useState<CGameCtnChallenge | undefined>();
+  const [ghost, setGhost] = useState<GhostSamples | undefined>();
 
   useEffect(() => {
     loadMap(mapUrl)
@@ -93,8 +93,8 @@ function App() {
 
   return (
     <div className="App">
-      {(!map || !ghost) && "Loading..."}
-      {map && ghost && <Renderer map={map} ghost={ghost} />}
+      {!map && "Loading..."}
+      {map && <Renderer map={map} ghost={ghost} />}
     </div>
   );
 }

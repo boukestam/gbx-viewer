@@ -20,10 +20,12 @@ export interface CurveDescription {
 }
 
 export function curve() {
+  const curvature = 0.1;
+
   const bezier = new Bezier(
     -1, -1, 
-    -1, 0,
-    0, 1, 
+    -1, curvature,
+    -curvature, 1, 
     1, 1
   );
 
@@ -54,17 +56,20 @@ export function chicane(left: boolean) {
 }
 
 export function slope(reverse?: boolean, ratio?: StepFunction) {
+  const curvature = 0.25;
+  const down = -0.05;
+
   const bezier = !reverse ? 
     new Bezier(
       -1, 1, 
-      -0.2, 1,
-      0.2, 0,
+      -curvature + down, 1,
+      curvature + down, 0,
       1, 0,
     ) : 
     new Bezier(
       -1, 0, 
-      -0.2, 0,
-      0.2, 1,
+      -curvature + down, 0,
+      curvature + down, 1,
       1, 1,
     );
 

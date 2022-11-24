@@ -19,7 +19,7 @@ export class Trail {
   offset: THREE.Vector3;
 
   constructor (scene: THREE.Scene, target: THREE.Object3D, offset: THREE.Vector3) {
-    this.maxQuads = 100;
+    this.maxQuads = 250;
     this.width = 0.1;
 
     this.target = target;
@@ -29,7 +29,6 @@ export class Trail {
     
     const positions = new Float32Array(this.maxQuads * POINTS_PER_QUAD * 3);
     geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    geometry.setDrawRange(0, 0);
     
     const material = new THREE.MeshBasicMaterial({ color: 0x000000 });
     material.transparent = true;
@@ -37,6 +36,7 @@ export class Trail {
     material.depthWrite = false;
     
     this.mesh = new THREE.Mesh(geometry, material);
+    this.mesh.renderOrder = 1;
     scene.add(this.mesh);
   }
 
@@ -57,8 +57,8 @@ export class Trail {
       let index = this.quadIndex * POINTS_PER_QUAD * 3;
       if (index + POINTS_PER_QUAD * 3 > positions.length) {
         this.quadIndex = 0;
+        this.samples = [];
         index = 0;
-        this.samples = [previousSample];
       }
 
       setPoint(positions, index, previousSample.clone().add(left));
@@ -69,7 +69,6 @@ export class Trail {
       setPoint(positions, index + 12, previousSample.clone().add(right));
       setPoint(positions, index + 15, sample.clone().add(right));
 
-      this.mesh.geometry.setDrawRange(0, index + POINTS_PER_QUAD * 3);
       this.mesh.geometry.attributes.position.needsUpdate = true;
       this.mesh.geometry.computeBoundingBox();
       this.mesh.geometry.computeBoundingSphere();

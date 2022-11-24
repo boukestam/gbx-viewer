@@ -1,10 +1,11 @@
 import earcut from "earcut";
 import * as THREE from "three";
+import { InstancedMesh } from "three";
 import { ELayerType } from "../parser/classes/CPlugCrystal";
 import { GeometryLayer, Material } from "../parser/nodes";
 import { Vec3, Color } from "../parser/types";
-import { BlockMesh } from "./block";
 import { Colors } from "./colors";
+import { getDifficultyColor } from "./surface";
 
 export interface MeshOutput {
   vertices: number[];
@@ -20,7 +21,7 @@ function area(data: number[]) {
   return Math.abs(sum);
 }
 
-function triangle(a: Vec3, b: Vec3, c: Vec3, color: Color, out: MeshOutput) {
+export function triangle(a: Vec3, b: Vec3, c: Vec3, color: Color, out: MeshOutput) {
   out.vertices.push(a.x, a.y, a.z, b.x, b.y, b.z, c.x, c.y, c.z);
   out.colors.push(
     color.r,
@@ -90,6 +91,10 @@ export function shape(
   steps: number,
   out: MeshOutput
 ) {
+  if (colors.length !== points.length + 2) {
+    throw new Error(`Invalid colors length points(${points.length}) colors(${colors.length})`);
+  }
+
   polygon(points, f, 0, colors[0], true, out);
 
   for (let i = 0; i < steps; i++) {
@@ -112,10 +117,10 @@ export function shape(
     }
   }
 
-  polygon(points, f, steps, colors[points.length], false, out);
+  polygon(points, f, steps, colors[points.length + 1], false, out);
 }
 
-export function createMesh(out: MeshOutput) {
+export function createMesh(out: MeshOutput, count: number): InstancedMesh {
   const geometry = new THREE.BufferGeometry();
 
   geometry.setAttribute(
@@ -142,9 +147,10 @@ export function createMesh(out: MeshOutput) {
     reflectivity: 0
   });
 
-  const mesh = new THREE.Mesh(
+  const mesh = new THREE.InstancedMesh(
     geometry,
-    material
+    material,
+    count
   );
 
   mesh.receiveShadow = true;
@@ -153,33 +159,7 @@ export function createMesh(out: MeshOutput) {
   return mesh;
 }
 
-export function createCube(size: Vec3, color: Color) {
-  const points = [
-    new Vec3(-size.x * 0.5, -size.y * 0.5, 0),
-    new Vec3(-size.x * 0.5, size.y * 0.5, 0),
-    new Vec3(size.x * 0.5, size.y * 0.5, 0),
-    new Vec3(size.x * 0.5, -size.y * 0.5, 0),
-  ];
-
-  const colors = [color, color, color, color, color, color];
-
-  const out: MeshOutput = {
-    vertices: [],
-    colors: [],
-  };
-
-  shape(
-    points,
-    colors,
-    (point, step) => point.add(new Vec3(0, 0, size.z).mul(step)),
-    1,
-    out
-  );
-
-  return createMesh(out);
-}
-
-export function createCrystal(crystal: any): BlockMesh {
+export function createCrystal(crystal: any, difficulty: number): MeshOutput {
   const geometry = crystal.layers.find((layer: any) => layer.type === ELayerType.Geometry) as GeometryLayer;
 
   const out: MeshOutput = {
@@ -188,10 +168,12 @@ export function createCrystal(crystal: any): BlockMesh {
   };
 
   const getColor = (material: Material) => {
+    if (material.link.includes("Plastic")) return getDifficultyColor(difficulty, Colors.plastic);
     if (material.link.includes("Dirt")) return Colors.dirtColor;
     if (material.link.includes("Grass")) return Colors.grassColor;
     if (material.link.includes("Ice")) return Colors.iceColor;
     if (material.link.includes("Tech")) return Colors.techColor;
+    if (material.link.includes("Water")) return Colors.waterColor;
     return Colors.bottomColor;
   };
 
@@ -204,7 +186,5 @@ export function createCrystal(crystal: any): BlockMesh {
     }
   }
   
-  return {
-    mesh: createMesh(out)
-  };
+  return out;
 }

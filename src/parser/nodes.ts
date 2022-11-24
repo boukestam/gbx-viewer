@@ -4,14 +4,13 @@ import { ELayerType } from "./classes/CPlugCrystal";
 import { Color, FileRef, Transform, Vec3, Node, Vec2 } from "./types";
 
 export interface Block {
-  blockName: string;
+  name: string;
   rotation: number;
-  x: number;
-  y: number;
-  z: number;
-  author: any;
-  skin: any;
-  blockParameters: any;
+  coord: Vec3;
+  flags: number;
+  author?: any;
+  skin?: any;
+  blockParameters?: any;
   color?: DifficultyColor;
 }
 
@@ -82,6 +81,7 @@ export interface CGameCtnChallenge {
   decorationEnvironment: string;
   size: Vec3;
   needUnlock: boolean;
+  bakedBlocks: Block[];
   blocks: Block[];
   anchoredObjects?: CGameCtnAnchoredObject[];
   embeddedData?: {

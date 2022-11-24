@@ -8,13 +8,22 @@ import { Camera } from "./camera";
 import { Trail } from "./trail";
 
 const { GLTFLoader } = require("three/addons/loaders/GLTFLoader.js");
+const { EffectComposer } = require('three/addons/postprocessing/EffectComposer.js');
+const { RenderPass } = require('three/addons/postprocessing/RenderPass.js');
+const { SMAAPass } = require('three/addons/postprocessing/SMAAPass.js');
+const Stats = require('three/addons/libs/stats.module.js');
 
-export function startRender(canvas: HTMLCanvasElement, map: CGameCtnChallenge, ghost: GhostSamples) {
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+export function startRender(container: HTMLDivElement, canvas: HTMLCanvasElement, map: CGameCtnChallenge, ghost?: GhostSamples) {
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: false });
+  renderer.setPixelRatio(window.devicePixelRatio);
+  renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.outputEncoding = THREE.sRGBEncoding;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFShadowMap;
   renderer.setClearColor(0xA7CBFE);
+
+  const stats = Stats.default();
+	container.appendChild(stats.dom);
 
   const camera = new Camera(45, canvas.width / canvas.height, 1, 10000);
 
@@ -45,31 +54,37 @@ export function startRender(canvas: HTMLCanvasElement, map: CGameCtnChallenge, g
   const sky = new THREE.AmbientLight(0xffffff, 0.5);
   scene.add(sky);
 
-  const planeGeometry = new THREE.PlaneGeometry(1, 1);
-  const planeMaterial = new THREE.MeshStandardMaterial({
-    color: hexToSrgb("#6A8642").toTHREE(),
-  });
-  const plane = new THREE.Mesh(planeGeometry, planeMaterial);
-  plane.rotateX(-Math.PI / 2);
-  plane.scale.x = 100000;
-  plane.scale.y = 100000;
-  plane.translateZ(8);
-  plane.receiveShadow = true;
-  scene.add(plane);
+  // Post processing
+
+  const composer = new EffectComposer(renderer);
+  composer.addPass(new RenderPass(scene, camera));
+
+  // composer.addPass(new SMAAPass( 
+  //   window.innerWidth * renderer.getPixelRatio(), 
+  //   window.innerHeight * renderer.getPixelRatio() 
+  // ));
 
   const trackCenter = loadBlocks(map, scene);
   camera.init(trackCenter);
   camera.start();
 
-  function resizeRendererToDisplaySize() {
+  function onWindowResize() {
     const width = window.innerWidth;
     const height = window.innerHeight;
     const needResize = canvas.width !== width || canvas.height !== height;
+
     if (needResize) {
-      renderer.setSize(width, height, false);
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+
+      renderer.setSize(width, height);
+      composer.setSize(width, height);
     }
+
     return needResize;
   }
+
+  window.addEventListener('resize', onWindowResize);
 
   const loader = new GLTFLoader();
 
@@ -135,6 +150,10 @@ export function startRender(canvas: HTMLCanvasElement, map: CGameCtnChallenge, g
   let previousTime = 0;
 
   function render(time: number) {
+    animationFrame = requestAnimationFrame(render);
+
+    stats.begin();
+
     let originalTime = time;
 
     const delta = (time - previousTime) / 1000;
@@ -147,64 +166,63 @@ export function startRender(canvas: HTMLCanvasElement, map: CGameCtnChallenge, g
       time -= startTime;
     }
 
-    let sampleIndex = ghost.samples.findIndex(
-      (sample) => sample.timestamp > time
-    );
-    if (sampleIndex === -1) {
-      startTime = originalTime;
-      render(originalTime);
-      return;
-    }
-
-    const sample = ghost.samples[sampleIndex];
-    const sampleTransform = sample.transform as Transform;
-    const nextSample = ghost.samples[Math.min(sampleIndex + 1, ghost.samples.length - 1)];
-
-    if (car) {
-      const samplePosition = sampleTransform.position;
-      car.position.set(samplePosition.x, samplePosition.y, samplePosition.z);
-      car.rotation.setFromQuaternion(sampleTransform.rotation.toTHREE());
-
-      const steer = sample.steer || 0;
-      const diff = steer - wheelAngle;
-      if (diff < 0) {
-        wheelAngle = Math.max(steer, wheelAngle - delta * 10);
-      } else if (diff > 0) {
-        wheelAngle = Math.min(steer, wheelAngle + delta * 10);
+    if (ghost) {
+      let sampleIndex = ghost.samples.findIndex(
+        (sample) => sample.timestamp > time
+      );
+      if (sampleIndex === -1) {
+        startTime = originalTime;
+        return;
       }
 
-      for (const wheel of wheels) {
-        wheelRotation += sampleTransform.speed * 0.1 * delta;
+      const sample = ghost.samples[sampleIndex];
+      const sampleTransform = sample.transform as Transform;
+      const nextSample = ghost.samples[Math.min(sampleIndex + 1, ghost.samples.length - 1)];
 
-        wheel.rotation.set(
-          wheelRotation, 
-          frontWheels.includes(wheel) ? wheelAngle * -0.35 : 0, 
-          0,
-          'YXZ'
-        );
+      if (car) {
+        const samplePosition = sampleTransform.position;
+        car.position.set(samplePosition.x, samplePosition.y, samplePosition.z);
+        car.rotation.setFromQuaternion(sampleTransform.rotation.toTHREE());
+  
+        const steer = sample.steer || 0;
+        const diff = steer - wheelAngle;
+        if (diff < 0) {
+          wheelAngle = Math.max(steer, wheelAngle - delta * 10);
+        } else if (diff > 0) {
+          wheelAngle = Math.min(steer, wheelAngle + delta * 10);
+        }
+  
+        for (const wheel of wheels) {
+          wheelRotation += sampleTransform.speed * 0.1 * delta;
+  
+          wheel.rotation.set(
+            wheelRotation, 
+            frontWheels.includes(wheel) ? wheelAngle * -0.35 : 0, 
+            0,
+            'YXZ'
+          );
+        }
+        
+        for (const trail of wheelTrails) {
+          trail.advance();
+        }
       }
-      
-      for (const trail of wheelTrails) {
-        trail.advance();
-      }
+
+      camera.update(delta, car, sun, sample, nextSample);
+    } else {
+      camera.update(delta, car, sun);
     }
 
-    if (resizeRendererToDisplaySize()) {
-      const canvas = renderer.domElement;
-      camera.aspect = canvas.clientWidth / canvas.clientHeight;
-      camera.updateProjectionMatrix();
-    }
+    composer.render();
 
-    camera.update(delta, car, sun, sample, nextSample);
-
-    renderer.render(scene, camera);
-
-    animationFrame = requestAnimationFrame(render);
+    stats.end();
   }
 
   animationFrame = requestAnimationFrame(render);
 
   return () => {
+    window.removeEventListener('resize', onWindowResize);
+
     camera.dispose();
 
     cancelAnimationFrame(animationFrame);

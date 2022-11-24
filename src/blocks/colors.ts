@@ -18,6 +18,7 @@ export const Colors = {
   waterColor: hexToSrgb('#8EE4F2', 0),
   iceColor: hexToSrgb('#ffffff'),
   platformColor: hexToSrgb('#B2ACAF'),
+  trackWallColor: new Color(0, 0, 0),
 
   bumpColorTop: hexToSrgb('#C5BBB4'),
   bumpColorMiddle: hexToSrgb('#5D585B'),
@@ -39,5 +40,13 @@ export const Colors = {
     blue: hexToSrgb('#2FA0C9'),
     red: hexToSrgb('#DF4144'),
     black: hexToSrgb('#212227'),
+  },
+  wood: {
+    default: hexToSrgb('#E8BE94'),
+    white: hexToSrgb('#E7DAD7'),
+    green: hexToSrgb('#4AD487'),
+    blue: hexToSrgb('#4072A3'),
+    red: hexToSrgb('#DF4144'),
+    black: hexToSrgb('#40342D'),
   }
 }

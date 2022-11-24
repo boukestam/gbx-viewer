@@ -17,26 +17,19 @@ import {
   tilt,
   up,
 } from "./curve";
+import { roads } from "./road";
 import {
   createSurface,
   getMiddlePointCount,
   getMiddlePoints,
   getTrackSurface,
   Surface,
+  trackHeight,
 } from "./surface";
 
-const platforms: { [name: string]: () => CurveDescription } = {
+export const platforms: { [name: string]: () => CurveDescription } = {
   Base: () => ({
     curves: [straight()],
-    size: new Vec3(1, 1, 1)
-  }),
-
-  Slope2Base: () => ({
-    curves: [slope()],
-    size: new Vec3(1, 2, 1)
-  }),
-  SlopeBase: () => ({
-    curves: [slope()],
     size: new Vec3(1, 1, 1)
   }),
 
@@ -166,8 +159,7 @@ const platforms: { [name: string]: () => CurveDescription } = {
   }),
   Slope2LoopStart: () => ({
     curves: [loop()],
-    size: new Vec3(1, 4, 1),
-    offset: new Vec3(0, 0, 0),
+    size: new Vec3(1, 4, 1)
   }),
 
   LoopStartCurve1In: () => ({
@@ -363,18 +355,17 @@ const platforms: { [name: string]: () => CurveDescription } = {
 };
 
 function getPlatformSurface(block: Block): Surface {
-  const surface = getTrackSurface(block.blockName, -1, 1, block.color, 'platform');
+  const surface = getTrackSurface(block.name, -1, 1, block.color, 'platform');
 
-  const points = [...surface.points, ...getMiddlePoints(1, -1, 0)];
+  const points = [new Vec3(-1, trackHeight, 0), ...surface.points,  new Vec3(1, trackHeight, 0), ...getMiddlePoints(1, -1, 0)];
 
   const colors = [
     Colors.edgeColor,
 
     ...surface.colors,
 
-    Colors.edgeColor,
+     ...new Array(getMiddlePointCount(1, -1) + 1).fill(Colors.bottomColor),
 
-     ...new Array(getMiddlePointCount(1, -1) - 1).fill(Colors.bottomColor),
     Colors.edgeColor,
   ];
 
@@ -384,18 +375,20 @@ function getPlatformSurface(block: Block): Surface {
 export function getPlatformCurve(name: string): CurveDescription {
   name = name.replace(/Platform(Tech|Dirt|Ice|Plastic|Platform)/, "");
 
+  if (name in roads) return roads[name]();
+
   if (!(name in platforms))
     return {
       curves: [straight()],
       size: new Vec3(1, 1, 1),
-      offset: new Vec3(0, -1, 0),
+      offset: new Vec3(0, 0, 0),
     };
 
   return platforms[name]();
 }
 
-export function createPlatform(block: Block): BlockMesh {
-  const curve = getPlatformCurve(block.blockName);
+export function createPlatform(block: Block, count: number): BlockMesh {
+  const curve = getPlatformCurve(block.name);
   const surface = getPlatformSurface(block);
-  return createSurface(block.blockName, surface, curve);
+  return createSurface(surface, curve, count);
 }
