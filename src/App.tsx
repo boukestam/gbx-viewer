@@ -52,8 +52,6 @@ async function loadMap(
 function parseGhost(body: any): GhostSamples {
   const ghost = body.recordData ? body : body.ghosts[0];
 
-  console.log(ghost);
-
   const samples: Sample[] = [];
   for (const sample of ghost.recordData.samples) {
     if (sample.transform) samples.push(sample);

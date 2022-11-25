@@ -12,7 +12,7 @@ const { RenderPass } = require('three/addons/postprocessing/RenderPass.js');
 const { SMAAPass } = require('three/addons/postprocessing/SMAAPass.js');
 const Stats = require('three/addons/libs/stats.module.js');
 
-export function startRender(container: HTMLDivElement, canvas: HTMLCanvasElement, map: CGameCtnChallenge, ghost?: GhostSamples) {
+export function startRender(container: HTMLElement, canvas: HTMLCanvasElement, map: CGameCtnChallenge, ghost?: GhostSamples) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: false });
   renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setSize(canvas.scrollWidth, canvas.scrollHeight);
@@ -52,7 +52,7 @@ export function startRender(container: HTMLDivElement, canvas: HTMLCanvasElement
 
   const trackCenter = loadBlocks(map, scene);
   camera.init(trackCenter);
-  camera.start(canvas);
+  camera.start(container);
 
   function onWindowResize() {
     const width = canvas.scrollWidth;
@@ -105,6 +105,10 @@ export function startRender(container: HTMLDivElement, canvas: HTMLCanvasElement
     window.removeEventListener('resize', onWindowResize);
 
     camera.dispose();
+    timeControls?.dispose();
+
+    scene.clear();
+    renderer.dispose();
 
     cancelAnimationFrame(animationFrame);
 

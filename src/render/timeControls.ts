@@ -52,6 +52,8 @@ export class TimeControls {
     this.listeners.mousedown = (e: MouseEvent) => {
       this.mouseDown = true;
       moveTime(e);
+
+      e.stopPropagation();
     };
 
     this.listeners.mouseup = (e: MouseEvent) => {

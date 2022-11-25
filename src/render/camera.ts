@@ -4,7 +4,7 @@ import { Transform, Vec3 } from "../parser/types";
 
 export class Camera extends THREE.PerspectiveCamera {
 
-  canvas: HTMLCanvasElement | undefined;
+  container: HTMLElement | undefined;
   listeners: any = {};
   keys: { [key: string]: boolean } = {};
 
@@ -25,8 +25,8 @@ export class Camera extends THREE.PerspectiveCamera {
     }
   }
 
-  start(canvas: HTMLCanvasElement) {
-    this.canvas = canvas;
+  start(container: HTMLElement) {
+    this.container = container;
 
     this.listeners.keydownListener = (e: KeyboardEvent) => {
       this.keys[e.key] = true;
@@ -72,7 +72,7 @@ export class Camera extends THREE.PerspectiveCamera {
 
     document.addEventListener("keydown", this.listeners.keydownListener);
     document.addEventListener("keyup", this.listeners.keyupListener);
-    canvas.addEventListener("mousedown", this.listeners.mousedownListener);
+    container.addEventListener("mousedown", this.listeners.mousedownListener);
     document.addEventListener("mouseup", this.listeners.mouseupListener);
     document.addEventListener("mousemove", this.listeners.mousemoveListener);
   }
@@ -134,12 +134,12 @@ export class Camera extends THREE.PerspectiveCamera {
   }
 
   dispose() {
-    if (!this.canvas) return;
+    if (!this.container) return;
 
     document.removeEventListener("keydown", this.listeners.keydownListener);
     document.removeEventListener("keyup", this.listeners.keyupListener);
     document.removeEventListener("mouseup", this.listeners.mouseupListener);
-    this.canvas.removeEventListener("mousedown", this.listeners.mousedownListener);
+    this.container.removeEventListener("mousedown", this.listeners.mousedownListener);
     document.removeEventListener("mousemove", this.listeners.mousemoveListener);
   }
 }
