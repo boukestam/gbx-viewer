@@ -21,8 +21,8 @@ export function Renderer({
 
   return (
     <>
-      <canvas ref={canvasRef} style={{ userSelect: "none" }}></canvas>
-      <div ref={containerRef} style={{ position: "fixed" }}></div>
+      <canvas ref={canvasRef} style={{ userSelect: "none", width: '100vw', height: '100vh' }}></canvas>
+      <div ref={containerRef} style={{ position: "fixed", left: '0px', top: '0px', width: '100vw', height: '100vh' }}></div>
     </>
   );
 }

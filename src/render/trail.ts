@@ -40,6 +40,14 @@ export class Trail {
     scene.add(this.mesh);
   }
 
+  reset() {
+    const positions = new Float32Array(this.maxQuads * POINTS_PER_QUAD * 3);
+    this.mesh.geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+    this.quadIndex = 0;
+    this.samples = [];
+  }
+
   advance() {
     const sample = this.sample();
 

@@ -1,12 +1,12 @@
 import * as THREE from "three";
 import { GhostSamples } from "../App";
 import { CGameCtnChallenge } from "../parser/nodes";
-import { Transform } from "../parser/types";
 import { loadBlocks } from "./blocks";
 import { Camera } from "./camera";
-import { Trail } from "./trail";
+import { Car } from "./car";
+import { initSun } from "./sun";
+import { TimeControls } from "./timeControls";
 
-const { GLTFLoader } = require("three/addons/loaders/GLTFLoader.js");
 const { EffectComposer } = require('three/addons/postprocessing/EffectComposer.js');
 const { RenderPass } = require('three/addons/postprocessing/RenderPass.js');
 const { SMAAPass } = require('three/addons/postprocessing/SMAAPass.js');
@@ -15,7 +15,7 @@ const Stats = require('three/addons/libs/stats.module.js');
 export function startRender(container: HTMLDivElement, canvas: HTMLCanvasElement, map: CGameCtnChallenge, ghost?: GhostSamples) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: false });
   renderer.setPixelRatio(window.devicePixelRatio);
-  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setSize(canvas.scrollWidth, canvas.scrollHeight);
   renderer.outputEncoding = THREE.sRGBEncoding;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFShadowMap;
@@ -24,34 +24,21 @@ export function startRender(container: HTMLDivElement, canvas: HTMLCanvasElement
   const stats = Stats.default();
 	container.appendChild(stats.dom);
 
+  let timeControls: TimeControls | undefined;
+  if (ghost) {
+    timeControls = new TimeControls(ghost);
+    container.appendChild(timeControls.dom);
+
+    timeControls.onReset = () => car.resetTrails();
+  }
+
   const camera = new Camera(45, canvas.width / canvas.height, 1, 10000);
 
   const scene = new THREE.Scene();
+  const sun = initSun(scene);
 
-  const hemiLight = new THREE.HemisphereLight( 0xffffff, 0xffffff, 0.6 );
-  hemiLight.color.setHSL( 0.6, 1, 0.6 );
-  hemiLight.groundColor.setHSL( 0.095, 1, 0.75 );
-  hemiLight.position.set( 0, 50, 0 );
-  scene.add( hemiLight );
-
-  const sun = new THREE.DirectionalLight(0xffffff, 1);
-  sun.color.setHSL( 0.1, 1, 0.95 );
-  sun.castShadow = true;
-  scene.add(sun);
-
-  const shadowMapSize = 1000;
-
-  sun.shadow.mapSize.width = 4096;
-  sun.shadow.mapSize.height = 4096;
-  sun.shadow.camera.near = 10;
-  sun.shadow.camera.far = 5000;
-  sun.shadow.camera.left = -shadowMapSize;
-  sun.shadow.camera.right = shadowMapSize;
-  sun.shadow.camera.top = -shadowMapSize;
-  sun.shadow.camera.bottom = shadowMapSize;
-
-  const sky = new THREE.AmbientLight(0xffffff, 0.5);
-  scene.add(sky);
+  const car = new Car();
+  car.load(scene);
 
   // Post processing
 
@@ -65,11 +52,11 @@ export function startRender(container: HTMLDivElement, canvas: HTMLCanvasElement
 
   const trackCenter = loadBlocks(map, scene);
   camera.init(trackCenter);
-  camera.start();
+  camera.start(canvas);
 
   function onWindowResize() {
-    const width = window.innerWidth;
-    const height = window.innerHeight;
+    const width = canvas.scrollWidth;
+    const height = canvas.scrollHeight;
     const needResize = canvas.width !== width || canvas.height !== height;
 
     if (needResize) {
@@ -85,131 +72,26 @@ export function startRender(container: HTMLDivElement, canvas: HTMLCanvasElement
 
   window.addEventListener('resize', onWindowResize);
 
-  const loader = new GLTFLoader();
-
-  let car: THREE.Object3D;
-  let wheelFrontLeft: THREE.Object3D;
-  let wheelFrontRight: THREE.Object3D;
-  let wheelBackLeft: THREE.Object3D;
-  let wheelBackRight: THREE.Object3D;
-  let wheels: THREE.Object3D[];
-  let frontWheels: THREE.Object3D[];
-
-  let wheelRotation = 0;
-  let wheelAngle = 0;
-
-  const wheelTrails: Trail[] = [];
-
-  loader.load(
-    "models/car.glb",
-
-    // onLoad callback
-    function (obj: any) {
-      car = obj.scene;
-      car.traverse((node: any) => {
-        if (node.name === 'WheelFrontLeft') wheelFrontLeft = node;
-        if (node.name === 'WheelFrontRight') wheelFrontRight = node;
-        if (node.name === 'WheelBackLeft') wheelBackLeft = node;
-        if (node.name === 'WheelBackRight') wheelBackRight = node;
-
-        node.castShadow = true;
-      });
-      
-      wheels = [wheelFrontLeft, wheelFrontRight, wheelBackLeft, wheelBackRight];
-      frontWheels = [wheelFrontLeft, wheelFrontRight];
-
-      for (const wheel of wheels) {
-        // specify points to create planar trail-head geometry
-        var trailHeadGeometry = [];
-        trailHeadGeometry.push( 
-          new THREE.Vector3( -1.0, 0.0, 0.0 ), 
-          new THREE.Vector3( 0.0, 0.0, 0.0 ), 
-          new THREE.Vector3( 1.0, 0.0, 0.0 ) 
-        );
-
-        const trail = new Trail(scene, wheel, new THREE.Vector3( 0.0, 0.0, 0.0 ));
-
-        wheelTrails.push(trail);
-      }
-      
-      scene.add(car);
-    },
-
-    undefined, // onProgress callback
-
-    // onError callback
-    function (err: any) {
-      console.error("An error happened");
-      console.error(err);
-    }
-  );
-
-  let startTime = -1;
   let animationFrame = 0;
   let previousTime = 0;
 
-  function render(time: number) {
+  function render(t: number) {
     animationFrame = requestAnimationFrame(render);
 
     stats.begin();
 
-    let originalTime = time;
+    const delta = (t - previousTime) / 1000;
+    previousTime = t;
 
-    const delta = (time - previousTime) / 1000;
-    previousTime = time;
+    if (timeControls) {
+      timeControls.update(delta);
+      const {sample, nextSample} = timeControls.sample();
 
-    if (startTime === -1) {
-      startTime = time;
-      time = 0;
+      car.update(delta, sample);
+
+      camera.update(delta, car.model, sun, sample, nextSample);
     } else {
-      time -= startTime;
-    }
-
-    if (ghost) {
-      let sampleIndex = ghost.samples.findIndex(
-        (sample) => sample.timestamp > time
-      );
-      if (sampleIndex === -1) {
-        startTime = originalTime;
-        return;
-      }
-
-      const sample = ghost.samples[sampleIndex];
-      const sampleTransform = sample.transform as Transform;
-      const nextSample = ghost.samples[Math.min(sampleIndex + 1, ghost.samples.length - 1)];
-
-      if (car) {
-        const samplePosition = sampleTransform.position;
-        car.position.set(samplePosition.x, samplePosition.y, samplePosition.z);
-        car.rotation.setFromQuaternion(sampleTransform.rotation.toTHREE());
-  
-        const steer = sample.steer || 0;
-        const diff = steer - wheelAngle;
-        if (diff < 0) {
-          wheelAngle = Math.max(steer, wheelAngle - delta * 10);
-        } else if (diff > 0) {
-          wheelAngle = Math.min(steer, wheelAngle + delta * 10);
-        }
-  
-        for (const wheel of wheels) {
-          wheelRotation += sampleTransform.speed * 0.1 * delta;
-  
-          wheel.rotation.set(
-            wheelRotation, 
-            frontWheels.includes(wheel) ? wheelAngle * -0.35 : 0, 
-            0,
-            'YXZ'
-          );
-        }
-        
-        for (const trail of wheelTrails) {
-          trail.advance();
-        }
-      }
-
-      camera.update(delta, car, sun, sample, nextSample);
-    } else {
-      camera.update(delta, car, sun);
+      camera.update(delta, car.model, sun);
     }
 
     composer.render();
@@ -225,5 +107,7 @@ export function startRender(container: HTMLDivElement, canvas: HTMLCanvasElement
     camera.dispose();
 
     cancelAnimationFrame(animationFrame);
+
+    container.innerHTML = '';
   };
 }
