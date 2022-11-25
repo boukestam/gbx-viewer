@@ -5,7 +5,7 @@ export interface Folder {
   subFolders: Folder[];
 }
 
-export interface ExternalNode {
+export interface File {
   fileName: any;
   resourceIndex: any;
   nodeIndex: number;
@@ -16,7 +16,7 @@ export interface ExternalNode {
 export interface ReferenceTable {
   ancestorLevel: number;
   folders: Folder[];
-  externalNodes: ExternalNode[];
+  files: File[];
 }
 
 function parseFolder(p: GameBoxParser): Folder {
@@ -34,8 +34,8 @@ function parseFolder(p: GameBoxParser): Folder {
 }
 
 export function parseRefTable(p: GameBoxParser): ReferenceTable | null {
-  const numExternalNodes = p.uint32();
-  if (numExternalNodes > 0) {
+  const numFiles = p.uint32();
+  if (numFiles > 0) {
     const ancestorLevel = p.uint32();
     const numSubFolders = p.uint32();
     const folders: Folder[] = [];
@@ -45,9 +45,9 @@ export function parseRefTable(p: GameBoxParser): ReferenceTable | null {
       folders.push(folder);
     }
 
-    const externalNodes: ExternalNode[] = [];
+    const files: File[] = [];
 
-    for (let i = 0; i < numExternalNodes; i++) {
+    for (let i = 0; i < numFiles; i++) {
       const flags = p.uint32();
 
       let fileName, resourceIndex, folderIndex;
@@ -72,10 +72,10 @@ export function parseRefTable(p: GameBoxParser): ReferenceTable | null {
         useFile,
         folderIndex,
       };
-      externalNodes.push(node);
+      files.push(node);
     }
 
-    const table = { ancestorLevel, folders, externalNodes };
+    const table = { ancestorLevel, folders, files };
     return table;
   }
 

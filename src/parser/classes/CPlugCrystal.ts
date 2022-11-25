@@ -301,7 +301,19 @@ function parseMaskLayer(p: GameBoxParser, node: Node, version: number, type: num
 }
 
 export function parseChunk(p: GameBoxParser, chunkId: number, node: Node): any {
-  if (chunkId === 0x09003003) {
+  if (chunkId === 0x09003000) {
+    const version = p.int32();
+
+    const layers = [{
+      layerId: "Layer0",
+      layerName: "Geometry",
+      type: ELayerType.Geometry,
+      isEnabled: true,
+      ...parseCrystal(p, node.materials)
+    }];
+
+    return {layers};
+  } else if (chunkId === 0x09003003) {
     const version = p.int32();
 
     const materials = p.list(() => {

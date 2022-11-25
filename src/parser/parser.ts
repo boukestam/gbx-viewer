@@ -2,7 +2,7 @@ import BufferReader from "buffer-reader";
 
 import { CollectionIds } from "./collection_ids";
 import { parseRefTable, ReferenceTable } from "./table";
-import { getChunkInfo, parseChunk } from "./chunk";
+import { parseChunk } from "./chunk";
 import { FileRef, Vec3, Vec4, Transform, Vec2, Color, Quaternion, Node } from "./types";
 import { parseHeader } from "./header";
 
@@ -13,6 +13,7 @@ const lzo1x = require("./lzo1x.js");
 export default class GameBoxParser {
   buffer: Buffer;
   parser: BufferReader;
+  encapsulated: boolean = false;
 
   lookbackSeen: boolean = false;
   lookbackStore: string[] = [];
@@ -32,6 +33,7 @@ export default class GameBoxParser {
   encapsulate(): GameBoxParser {
     const e = new GameBoxParser(this.buffer);
     e.parser = this.parser;
+    e.encapsulated = true;
     return e;
   }
 
@@ -72,44 +74,47 @@ export default class GameBoxParser {
         break;
       }
 
-      const chunkFlags = getChunkInfo(chunkId);
+      let skipTo = -1;
 
-      if (chunkFlags.skippable) {
-        const skip = this.uint32();
-        if (skip !== 0x534b4950) {
-          break;
-        }
-
+      if (this.peekUint32() === 0x534b4950) {
+        this.skip(4); // skip byte
         const chunkDataSize = this.uint32();
-        this.skip(chunkDataSize);
-      } else {
-        let skipTo = -1;
+        skipTo = this.parser.tell() + chunkDataSize;
+      }
 
-        if (chunkFlags.parsableSkippable) {
-          this.skip(4); // skip byte
-          const chunkDataSize = this.uint32();
-          skipTo = this.parser.tell() + chunkDataSize;
-        }
-
+      try {
         const data = parseChunk(this, chunkId, node);
         if (data) {
           for (const key in data) {
             node[key] = data[key];
           }
         }
-
-        if (skipTo !== -1) this.parser.seek(skipTo);
+      } catch (e) {
+        if (skipTo === -1) throw e;
       }
+
+      if (skipTo !== -1) this.parser.seek(skipTo);
     }
 
     return node;
   }
 
   nodeRef(): Node | null {
+    if (this.encapsulated) return this.parseNode();
+
     const index = this.int32() - 1;
 
     if (index < 0) {
       return null;
+    }
+    
+    if (this.referenceTable !== null && this.referenceTable.files.length > 0) {
+      const file = this.referenceTable.files[index];
+      if (file) {
+        // Don't handle external files
+        this.nodeStore[index] = null;
+        return null;
+      }
     }
 
     if (index in this.nodeStore && this.nodeStore[index]) {
@@ -186,6 +191,16 @@ export default class GameBoxParser {
     const items: T[] = [];
     for (let i = 0; i < count; i++) {
       items.push(f());
+    }
+    return items;
+  }
+
+  dict<TK, TV>(f: () => {key: TK, value: TV}) {
+    const count = this.int32();
+    const items: any = {};
+    for (let i = 0; i < count; i++) {
+      const {key, value} = f();
+      items[key] = value;
     }
     return items;
   }
