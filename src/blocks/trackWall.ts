@@ -33,7 +33,7 @@ export const trackWalls: { [name: string]: () => CurveDescription } = {
   
 };
 
-function getTrackWallSurface(block: Block): Surface {
+export function getTrackWallSurface(block: Block): Surface {
   const surface = getTrackSurface(block.name, -1, 1, block.color, 'platform');
   for (const point of surface.points) {
     point.y += 1 - trackHeight;
@@ -56,23 +56,16 @@ function getTrackWallSurface(block: Block): Surface {
   return { ...surface, points, colors };
 }
 
-export function getTrackWallCurve(name: string): CurveDescription {
+export function getTrackWallCurve(name: string): (block: Block) => CurveDescription {
   name = name.replace(/TrackWall/, "");
-  name = name.replace(/Pillar/, "");
 
-  if (name in roads) return roads[name]();
-  if (name in platforms) return platforms[name]();
-  if (name in trackWalls) return trackWalls[name]();
+  if (name in roads) return roads[name];
+  if (name in platforms) return platforms[name];
+  if (name in trackWalls) return trackWalls[name];
 
-  return {
+  return (block) => ({
     curves: [straight()],
     size: new Vec3(1, 1, 1),
     offset: new Vec3(0, 0, 0),
-  };
-}
-
-export function createTrackWall(block: Block, count: number): BlockMesh {
-  const curve = getTrackWallCurve(block.name);
-  const surface = getTrackWallSurface(block);
-  return createSurface(surface, curve, count);
+  });
 }

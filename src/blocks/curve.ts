@@ -17,6 +17,7 @@ export interface CurveDescription {
   offset?: Vec3;
   rotation?: Vec3;
   pivot?: Vec3;
+  name?: string;
 }
 
 export function curve() {

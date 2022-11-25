@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { GhostSamples } from "../App";
+import { GhostSamples } from "../loader";
 import { CGameCtnChallenge } from "../parser/nodes";
 import { loadBlocks } from "./blocks";
 import { Camera } from "./camera";
@@ -50,11 +50,11 @@ export function startRender(container: HTMLElement, canvas: HTMLCanvasElement, m
   //   window.innerHeight * renderer.getPixelRatio() 
   // ));
 
-  const trackCenter = loadBlocks(map, scene);
+  const {trackCenter, meshes} = loadBlocks(map, scene);
   camera.init(trackCenter);
   camera.start(container);
 
-  function onWindowResize() {
+  const onWindowResize = () => {
     const width = canvas.scrollWidth;
     const height = canvas.scrollHeight;
     const needResize = canvas.width !== width || canvas.height !== height;
@@ -68,14 +68,14 @@ export function startRender(container: HTMLElement, canvas: HTMLCanvasElement, m
     }
 
     return needResize;
-  }
+  };
 
   window.addEventListener('resize', onWindowResize);
 
   let animationFrame = 0;
   let previousTime = 0;
 
-  function render(t: number) {
+  const render = (t: number) => {
     animationFrame = requestAnimationFrame(render);
 
     stats.begin();
@@ -97,20 +97,25 @@ export function startRender(container: HTMLElement, canvas: HTMLCanvasElement, m
     composer.render();
 
     stats.end();
-  }
+  };
 
   animationFrame = requestAnimationFrame(render);
 
   return () => {
+    cancelAnimationFrame(animationFrame);
+
     window.removeEventListener('resize', onWindowResize);
 
     camera.dispose();
     timeControls?.dispose();
 
-    scene.clear();
-    renderer.dispose();
+    for (const blockMesh of Object.values(meshes)) {
+      if (blockMesh) blockMesh.mesh.dispose();
+    }
 
-    cancelAnimationFrame(animationFrame);
+    sun.dispose();
+
+    renderer.dispose();
 
     container.innerHTML = '';
   };

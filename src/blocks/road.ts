@@ -3,7 +3,7 @@ import { Vec3 } from "../parser/types";
 import { BlockMesh } from "./block";
 import { Colors } from "./colors";
 import { chicane, concave, convex, curve, CurveDescription, flat, raised, slope, straight, tilt, up } from "./curve";
-import { createSurface, getTrackHeight, getTrackSurface, Surface, trackHeight } from "./surface";
+import { createSurface, getTrackHeight, getTrackSurface, Surface } from "./surface";
 
 const roadLeft = -0.9;
 const roadRight = 0.9;
@@ -12,7 +12,7 @@ const borderWidth = 0.113;
 const trackLineOffset = 0.1875;
 const trackLineWidth = 0.01;
 
-export const roads: {[name: string]: () => CurveDescription} = {
+export const roads: {[name: string]: (block: Block) => CurveDescription} = {
   Straight: () => ({
     curves: [straight()],
     size: new Vec3(1, 1, 1)
@@ -66,11 +66,12 @@ export const roads: {[name: string]: () => CurveDescription} = {
     curves: [slope()],
     size: new Vec3(1, 1, 1)
   }),
-  SlopeBase2x1: () => ({
+  SlopeBase2x1: (block) => ({
     curves: [slope()],
     size: new Vec3(1, 1, 2),
     offset: new Vec3(0, 0, -1),
-    pivot: new Vec3(0, 0, 1)
+    pivot: new Vec3(0, 0, block.rotation === 1 || block.rotation === 2 ? 1 : -1),
+    name: block.name + 'Rot(' + block.rotation.toString() + ')'
   }),
 
   SlopeStraight: () => ({
@@ -277,7 +278,7 @@ export const roads: {[name: string]: () => CurveDescription} = {
   }),
 }
 
-function getRoadSurface(block: Block): Surface {
+export function getRoadSurface(block: Block): Surface {
   const surface = getTrackSurface(
     block.name, 
     roadLeft + borderWidth + trackLineOffset + trackLineWidth, 
@@ -350,19 +351,13 @@ function getRoadSurface(block: Block): Surface {
   return {...surface, points, colors};
 }
 
-export function getRoadCurve(name: string): CurveDescription {
+export function getRoadCurve(name: string): (block: Block) => CurveDescription {
   name = name.replace(/Road(Tech|Dirt|Ice)/, "");
 
-  if (!(name in roads)) return {
+  if (!(name in roads)) return (block) => ({
     curves: [straight()],
     size: new Vec3(1, 1, 1)
-  };
+  });
 
-  return roads[name]();
-}
-
-export function createRoad(block: Block, count: number): BlockMesh {
-  const curve = getRoadCurve(block.name);
-  const surface = getRoadSurface(block);
-  return createSurface(surface, curve, count);
+  return roads[name];
 }

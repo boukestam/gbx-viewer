@@ -354,7 +354,7 @@ export const platforms: { [name: string]: () => CurveDescription } = {
   }),
 };
 
-function getPlatformSurface(block: Block): Surface {
+export function getPlatformSurface(block: Block): Surface {
   const surface = getTrackSurface(block.name, -1, 1, block.color, 'platform');
 
   const points = [new Vec3(-1, trackHeight, 0), ...surface.points,  new Vec3(1, trackHeight, 0), ...getMiddlePoints(1, -1, 0)];
@@ -372,23 +372,17 @@ function getPlatformSurface(block: Block): Surface {
   return { ...surface, points, colors };
 }
 
-export function getPlatformCurve(name: string): CurveDescription {
+export function getPlatformCurve(name: string): (block: Block) => CurveDescription {
   name = name.replace(/Platform(Tech|Dirt|Ice|Plastic|Platform)/, "");
 
-  if (name in roads) return roads[name]();
+  if (name in roads) return roads[name];
 
   if (!(name in platforms))
-    return {
+    return (block) => ({
       curves: [straight()],
       size: new Vec3(1, 1, 1),
       offset: new Vec3(0, 0, 0),
-    };
+    });
 
-  return platforms[name]();
-}
-
-export function createPlatform(block: Block, count: number): BlockMesh {
-  const curve = getPlatformCurve(block.name);
-  const surface = getPlatformSurface(block);
-  return createSurface(surface, curve, count);
+  return platforms[name];
 }

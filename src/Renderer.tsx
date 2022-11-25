@@ -1,6 +1,6 @@
 import React, { createRef, useEffect } from "react";
 import { CGameCtnChallenge } from "./parser/nodes";
-import { GhostSamples } from "./App";
+import { GhostSamples } from "./loader";
 import { startRender } from "./render/render";
 
 export function Renderer({

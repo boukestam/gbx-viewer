@@ -1,13 +1,11 @@
 import * as THREE from "three";
 import { Vector3 } from "three";
-import { createAnchoredObject, createBlock } from "../blocks/block";
+import { BlockMesh, createAnchoredObject, createBlock, getBlockInfo } from "../blocks/block";
 import { Block, CGameCtnChallenge } from "../parser/nodes";
 import { Vec3 } from "../parser/types";
 import { BLOCK_SIZE } from "../utils/constants";
 
-export function getBlockName(block: Block) {
-  return block.name + (block.color?.toString() || '');
-}
+
 
 function addPivot (scene: THREE.Scene, mesh: THREE.InstancedMesh, index: number, position: Vec3, pivotPosition: Vec3, rotation: Vec3) {
   const dummy = new THREE.Object3D();
@@ -26,7 +24,7 @@ function addPivot (scene: THREE.Scene, mesh: THREE.InstancedMesh, index: number,
   pivot.updateWorldMatrix(false, true);
 
   mesh.setMatrixAt(index, dummy.matrixWorld);
-  mesh.instanceMatrix.needsUpdate = true;;
+  mesh.instanceMatrix.needsUpdate = true;
 
   if (index === 0) scene.add(mesh);
 };
@@ -38,15 +36,20 @@ export function loadBlocks(map: CGameCtnChallenge, scene: THREE.Scene) {
   const blocks = map.blocks.concat(map.bakedBlocks);
 
   const counts: {[name: string]: number} = {};
+  const meshes: {[name: string]: BlockMesh | null} = {};
   const indexes: {[name: string]: number} = {};
+
+  // Count variants
+
   for (const block of blocks) {
-    const name = getBlockName(block);
+    const {name} = getBlockInfo(block);
     if (name in counts) counts[name]++;
     else {
       counts[name] = 1;
       indexes[name] = 0;
     }
   }
+
   if (map.anchoredObjects) {
     for (const object of map.anchoredObjects) {
       if (object.itemModel[0] in counts) counts[object.itemModel[0]]++;
@@ -57,9 +60,24 @@ export function loadBlocks(map: CGameCtnChallenge, scene: THREE.Scene) {
     }
   }
 
+  // Create meshes
+
   for (const block of blocks) {
-    const name = getBlockName(block);
-    const blockMesh = createBlock(block, counts[name]);
+    const {name} = getBlockInfo(block);
+    if (!(name in meshes)) meshes[name] = createBlock(block, counts[name]);
+  }
+
+  if (map.anchoredObjects) {
+    for (const object of map.anchoredObjects) {
+      if(!(object.itemModel[0] in meshes)) meshes[object.itemModel[0]] = createAnchoredObject(object, map, counts[object.itemModel[0]]);
+    }
+  }
+
+  // Place objects
+
+  for (const block of blocks) {
+    const {name} = getBlockInfo(block);
+    const blockMesh = meshes[name];
     if (!blockMesh) continue;
 
     if ((block.flags & 0x20000000) > 0) {
@@ -104,7 +122,7 @@ export function loadBlocks(map: CGameCtnChallenge, scene: THREE.Scene) {
 
   if (map.anchoredObjects) {
     for (const object of map.anchoredObjects) {
-      const blockMesh = createAnchoredObject(object, map, counts[object.itemModel[0]]);
+      const blockMesh = meshes[object.itemModel[0]];
       if (!blockMesh) continue;
 
       addPivot(
@@ -123,5 +141,10 @@ export function loadBlocks(map: CGameCtnChallenge, scene: THREE.Scene) {
     }
   }
 
-  return trackCenter.divScalar(blockCount);
+  return {
+    trackCenter: trackCenter.divScalar(blockCount),
+    counts,
+    meshes, 
+    indexes
+  };
 }

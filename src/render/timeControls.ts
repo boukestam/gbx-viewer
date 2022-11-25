@@ -1,4 +1,4 @@
-import { GhostSamples } from "../App";
+import { GhostSamples } from "../loader";
 
 export class TimeControls {
 
@@ -47,7 +47,7 @@ export class TimeControls {
       this.currentTime = ratio * this.endTime;
 
       this.onReset?.();
-    }
+    };
 
     this.listeners.mousedown = (e: MouseEvent) => {
       this.mouseDown = true;
